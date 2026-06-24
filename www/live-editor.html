@@ -78,9 +78,9 @@ const editor = document.getElementById("editor");
 const output = document.getElementById("output");
 const language = document.getElementById("language");
 
-let htmlCode = `<h1>Hello</h1>`;
-let cssCode = `body{background:black;color:lime}`;
-let jsCode = `console.log("Hello")`;
+let htmlCode = localStorage.getItem("htmlCode") || `<h1>Hello</h1>`;
+let cssCode = localStorage.getItem("cssCode") || `body{background:black;color:lime}`;
+let jsCode = localStorage.getItem("jsCode") || `console.log("Hello")`;
 
 function refreshOutput(){
 
@@ -137,6 +137,10 @@ if(language.value === "js"){
   jsCode = editor.value;
 }
 
+localStorage.setItem("htmlCode", htmlCode);
+localStorage.setItem("cssCode", cssCode);
+localStorage.setItem("jsCode", jsCode);
+  
 refreshOutput();
 
 });
