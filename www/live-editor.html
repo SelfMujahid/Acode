@@ -9,8 +9,6 @@
 :root{
   --bg:#0f172a;
   --bg2:#111827;
-  --panel:#111827;
-  --panel2:#0b1220;
   --card:rgba(17,24,39,.96);
   --line:rgba(255,255,255,.08);
   --text:#e5e7eb;
@@ -19,10 +17,8 @@
   --accent2:#4f46e5;
   --good:#00c853;
   --danger:#f6465d;
-  --warn:#f59e0b;
   --shadow:0 18px 40px rgba(0,0,0,.28);
   --radius:18px;
-  --radius-sm:12px;
   --transition:.22s ease;
 }
 
@@ -32,8 +28,7 @@
   padding:0;
 }
 
-html,
-body{
+html,body{
   height:100%;
 }
 
@@ -47,9 +42,7 @@ body{
   overflow:hidden;
 }
 
-button,
-input,
-textarea{
+button,input,textarea{
   font:inherit;
 }
 
@@ -101,10 +94,36 @@ body.sidebar-open #sidebar{
   margin-bottom:10px;
 }
 
-#sidebar-sub{
-  font-size:12px;
+#project-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.project-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:12px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.06);
+  cursor:pointer;
+}
+
+.project-item.active{
+  background:rgba(0,194,255,.12);
+  border-color:rgba(0,194,255,.18);
+}
+
+.project-item strong{
+  font-size:13px;
+}
+
+.project-item span{
+  font-size:11px;
   color:var(--muted);
-  margin-bottom:12px;
 }
 
 #tree{
@@ -174,8 +193,24 @@ body.sidebar-open #sidebar{
   width:18px;
   text-align:center;
   flex:0 0 auto;
-  color:#67e8f9;
 }
+
+.file-badge{
+  min-width:42px;
+  padding:2px 7px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:800;
+  text-align:center;
+  color:#061018;
+  background:#cbd5e1;
+}
+
+.badge-html{ background:#ffd166; }
+.badge-css{ background:#67e8f9; }
+.badge-js{ background:#facc15; }
+.badge-img{ background:#86efac; }
+.badge-txt{ background:#cbd5e1; }
 
 .node-name{
   min-width:0;
@@ -214,17 +249,15 @@ body.sidebar-open #sidebar{
   transform:translateY(-1px);
 }
 
+.node-btn.danger:hover{
+  background:rgba(246,70,93,.16);
+  border-color:rgba(246,70,93,.25);
+}
+
 .node-children{
   margin-left:18px;
   padding-left:10px;
   border-left:1px dashed rgba(255,255,255,.10);
-}
-
-.file-meta{
-  color:var(--muted);
-  font-size:11px;
-  margin-top:6px;
-  padding-left:6px;
 }
 
 #app{
@@ -337,22 +370,10 @@ body.sidebar-open #sidebar{
   background:#fff;
 }
 
-#status{
-  height:28px;
-  padding:0 12px;
-  display:flex;
-  align-items:center;
-  border-top:1px solid var(--line);
-  background:rgba(9,17,31,.84);
-  color:var(--muted);
-  font-size:12px;
-}
-
 input[type="file"]{
   display:none;
 }
 
-/* Dialog */
 #dialog-root{
   position:fixed;
   inset:0;
@@ -408,12 +429,6 @@ input[type="file"]{
   box-shadow:0 0 0 4px rgba(0,194,255,.12);
 }
 
-.dialog-textarea{
-  width:100%;
-  min-height:120px;
-  resize:vertical;
-}
-
 .dialog-actions{
   display:flex;
   justify-content:flex-end;
@@ -449,41 +464,6 @@ input[type="file"]{
   color:white;
 }
 
-.dialog-list{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  max-height:300px;
-  overflow:auto;
-  padding-right:4px;
-}
-
-.dialog-item{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  padding:11px 12px;
-  border-radius:14px;
-  background:#0b1220;
-  border:1px solid rgba(255,255,255,.08);
-  cursor:pointer;
-}
-
-.dialog-item:hover{
-  background:#101a2d;
-}
-
-.dialog-item strong{
-  font-size:14px;
-}
-
-.dialog-item span{
-  font-size:12px;
-  color:var(--muted);
-}
-
-/* Small screens */
 @media (max-width: 900px){
   #project-name{
     max-width:28vw;
@@ -504,8 +484,8 @@ input[type="file"]{
 
 <aside id="sidebar">
   <div id="sidebar-header">
-    <div id="sidebar-title">Project Files</div>
-    <div id="sidebar-sub">Click a file to open it. Use folder icons to create items inside that folder.</div>
+    <div id="sidebar-title">Projects</div>
+    <div id="project-list"></div>
   </div>
   <div id="tree"></div>
 </aside>
@@ -528,18 +508,18 @@ input[type="file"]{
       </div>
     </div>
     <iframe id="preview"></iframe>
-    <div id="status">Ready</div>
   </div>
 </div>
 
 <input id="fileInput" type="file" multiple />
 
 <script>
-const STORAGE_KEY = "liveProjectWorkspaceV5";
+const STORAGE_KEY = "liveProjectWorkspaceV6";
 
 const backdrop = document.getElementById("backdrop");
 const sidebar = document.getElementById("sidebar");
 const tree = document.getElementById("tree");
+const projectList = document.getElementById("project-list");
 const dialogRoot = document.getElementById("dialog-root");
 const menuBtn = document.getElementById("menuBtn");
 const newProjectBtn = document.getElementById("newProjectBtn");
@@ -547,110 +527,14 @@ const projectNameEl = document.getElementById("project-name");
 const currentFileEl = document.getElementById("current-file");
 const editor = document.getElementById("editor");
 const preview = document.getElementById("preview");
-const statusEl = document.getElementById("status");
 const fileInput = document.getElementById("fileInput");
 const imagePreviewWrap = document.getElementById("image-preview-wrap");
 const imagePreview = document.getElementById("image-preview");
 
-let project = loadProject();
-let currentFile = project.currentFile || `${project.root}/index.html`;
-let expandedFolders = new Set(project.expandedFolders || [project.root]);
-let activePreviewFiles = project.activePreviewFiles || {
-  html: `${project.root}/index.html`,
-  css: `${project.root}/style.css`,
-  js: `${project.root}/app.js`
-};
+let appState = loadAppState();
 
-function createDefaultProject(rootName) {
-  const root = normalizePath(rootName) || "MyProject";
-  const folders = [root];
-  const files = {};
-  files[`${root}/index.html`] = `<h1>Hello</h1>
-<p>Live project editor</p>
-<img src="assets/logo.png" alt="logo" style="max-width:220px;display:block;margin-top:12px;">`;
-  files[`${root}/style.css`] = `body{
-  background:#111;
-  color:lime;
-  font-family:sans-serif;
-  padding:20px;
-}`;
-  files[`${root}/app.js`] = `console.log("Hello");`;
-
-  return {
-    root,
-    folders,
-    files,
-    currentFile: `${root}/index.html`,
-    expandedFolders: [root],
-    activePreviewFiles: {
-      html: `${root}/index.html`,
-      css: `${root}/style.css`,
-      js: `${root}/app.js`
-    }
-  };
-}
-
-function loadProject() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return createDefaultProject("MyProject");
-    const parsed = JSON.parse(raw);
-    return normalizeProject(parsed);
-  } catch (e) {
-    return createDefaultProject("MyProject");
-  }
-}
-
-function normalizeProject(data) {
-  const fallback = createDefaultProject("MyProject");
-
-  const root = normalizePath(data?.root || fallback.root) || fallback.root;
-  const folders = Array.isArray(data?.folders) ? data.folders.map(normalizePath).filter(Boolean) : fallback.folders.slice();
-  const files = data?.files && typeof data.files === "object" ? data.files : fallback.files;
-
-  folders.unshift(root);
-  const uniqueFolders = [...new Set(folders)];
-
-  const normalizedFiles = {};
-  for (const [key, value] of Object.entries(files)) {
-    const p = normalizePath(key);
-    if (p) normalizedFiles[p] = value;
-  }
-
-  const current = normalizePath(data?.currentFile || fallback.currentFile) || `${root}/index.html`;
-  const expanded = Array.isArray(data?.expandedFolders) ? data.expandedFolders.map(normalizePath).filter(Boolean) : [root];
-  const previewFiles = data?.activePreviewFiles && typeof data.activePreviewFiles === "object"
-    ? {
-        html: normalizePath(data.activePreviewFiles.html || `${root}/index.html`),
-        css: normalizePath(data.activePreviewFiles.css || `${root}/style.css`),
-        js: normalizePath(data.activePreviewFiles.js || `${root}/app.js`)
-      }
-    : {
-        html: `${root}/index.html`,
-        css: `${root}/style.css`,
-        js: `${root}/app.js`
-      };
-
-  return {
-    root,
-    folders: uniqueFolders,
-    files: normalizedFiles,
-    currentFile: current,
-    expandedFolders: [...new Set(expanded)],
-    activePreviewFiles: previewFiles
-  };
-}
-
-function saveProject() {
-  project.currentFile = currentFile;
-  project.expandedFolders = [...expandedFolders];
-  project.activePreviewFiles = activePreviewFiles;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
-  projectNameEl.textContent = project.root;
-}
-
-function setStatus(msg) {
-  statusEl.textContent = msg;
+function uid() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
 function normalizePath(path) {
@@ -686,39 +570,177 @@ function isImageFile(path) {
   return ["png","jpg","jpeg","gif","webp","bmp","svg","avif"].includes(extOf(path));
 }
 
-function isTextFile(path) {
-  return !isImageFile(path);
+function fileBadge(path) {
+  if (isImageFile(path)) return "IMG";
+  const ext = extOf(path);
+  if (["html","htm"].includes(ext)) return "HTML";
+  if (ext === "css") return "CSS";
+  if (ext === "js") return "JS";
+  if (ext) return ext.toUpperCase();
+  return "FILE";
 }
 
-function joinPath(base, name) {
-  const a = normalizePath(base);
-  const b = normalizePath(name);
-  return normalizePath(a ? `${a}/${b}` : b);
+function badgeClass(path) {
+  if (isImageFile(path)) return "badge-img";
+  const ext = extOf(path);
+  if (["html","htm"].includes(ext)) return "badge-html";
+  if (ext === "css") return "badge-css";
+  if (ext === "js") return "badge-js";
+  return "badge-txt";
 }
 
-function uniqueFilePath(path) {
-  path = normalizePath(path);
-  if (!path) return path;
+function sanitizeProjectName(name) {
+  const clean = String(name || "")
+    .replace(/[\\/]+/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+  return clean || "MyProject";
+}
 
-  if (!project.files[path] && !project.folders.includes(path)) return path;
+function createDefaultProject(name) {
+  const root = sanitizeProjectName(name);
+  const files = {};
+  files[`${root}/index.html`] = `<h1>Hello</h1>\n<p>Live project editor</p>\n<img src="assets/logo.png" alt="logo" style="max-width:220px;display:block;margin-top:12px;">`;
+  files[`${root}/style.css`] = `body{\n  background:#111;\n  color:lime;\n  font-family:sans-serif;\n  padding:20px;\n}`;
+  files[`${root}/app.js`] = `console.log("Hello");`;
 
-  const lastDot = path.lastIndexOf(".");
-  const lastSlash = path.lastIndexOf("/");
-  const hasExt = lastDot > lastSlash;
+  return normalizeProject({
+    id: uid(),
+    name: root,
+    root,
+    files,
+    currentFile: `${root}/index.html`,
+    expandedFolders: [root],
+    activePreviewFiles: {
+      html: `${root}/index.html`,
+      css: `${root}/style.css`,
+      js: `${root}/app.js`
+    }
+  });
+}
 
-  const base = hasExt ? path.slice(0, lastDot) : path;
-  const ext = hasExt ? path.slice(lastDot) : "";
+function normalizeProject(p) {
+  const root = sanitizeProjectName(p?.root || p?.name || "MyProject");
+  const files = {};
+  const incomingFiles = p?.files && typeof p.files === "object" ? p.files : {};
 
-  let i = 1;
-  let candidate = path;
-  while (project.files[candidate] || project.folders.includes(candidate)) {
-    candidate = `${base} (${i})${ext}`;
-    i++;
+  for (const [k, v] of Object.entries(incomingFiles)) {
+    const path = normalizePath(k);
+    if (path) files[path] = v;
   }
-  return candidate;
+
+  if (!files[`${root}/index.html`]) {
+    files[`${root}/index.html`] = `<h1>Hello</h1>\n<p>Live project editor</p>\n<img src="assets/logo.png" alt="logo" style="max-width:220px;display:block;margin-top:12px;">`;
+  }
+  if (!files[`${root}/style.css`]) {
+    files[`${root}/style.css`] = `body{\n  background:#111;\n  color:lime;\n  font-family:sans-serif;\n  padding:20px;\n}`;
+  }
+  if (!files[`${root}/app.js`]) {
+    files[`${root}/app.js`] = `console.log("Hello");`;
+  }
+
+  const folders = new Set(Array.isArray(p?.folders) ? p.folders.map(normalizePath).filter(Boolean) : []);
+  folders.add(root);
+
+  for (const key of Object.keys(files)) {
+    let dir = parentPath(key);
+    while (dir) {
+      folders.add(dir);
+      dir = parentPath(dir);
+    }
+  }
+
+  const expandedFolders = Array.isArray(p?.expandedFolders)
+    ? p.expandedFolders.map(normalizePath).filter(Boolean)
+    : [root];
+
+  const currentFile = normalizePath(p?.currentFile || `${root}/index.html`) || `${root}/index.html`;
+
+  const activePreviewFiles = p?.activePreviewFiles && typeof p.activePreviewFiles === "object"
+    ? {
+        html: normalizePath(p.activePreviewFiles.html || `${root}/index.html`) || `${root}/index.html`,
+        css: normalizePath(p.activePreviewFiles.css || `${root}/style.css`) || `${root}/style.css`,
+        js: normalizePath(p.activePreviewFiles.js || `${root}/app.js`) || `${root}/app.js`
+      }
+    : {
+        html: `${root}/index.html`,
+        css: `${root}/style.css`,
+        js: `${root}/app.js`
+      };
+
+  return {
+    id: p?.id || uid(),
+    name: p?.name || root,
+    root,
+    folders: [...folders],
+    files,
+    currentFile,
+    expandedFolders: [...new Set([...expandedFolders, root])],
+    activePreviewFiles
+  };
 }
 
-function ensureFolder(folderPath) {
+function defaultState() {
+  const project = createDefaultProject("MyProject");
+  return {
+    activeProjectId: project.id,
+    projects: [project]
+  };
+}
+
+function loadAppState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    const projects = Array.isArray(parsed?.projects) ? parsed.projects.map(normalizeProject) : defaultState().projects;
+    const activeProjectId = parsed?.activeProjectId || projects[0]?.id;
+    return { projects, activeProjectId };
+  } catch {
+    return defaultState();
+  }
+}
+
+function saveAppState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+  renderProjectList();
+  renderSidebarTree();
+  renderTopLabels();
+}
+
+function activeProject() {
+  return appState.projects.find(p => p.id === appState.activeProjectId) || appState.projects[0];
+}
+
+function setActiveProject(id) {
+  appState.activeProjectId = id;
+  saveAppState();
+  openCurrentFile();
+  closeSidebar();
+}
+
+function createProject(name) {
+  const project = createDefaultProject(name);
+  appState.projects.push(project);
+  appState.activeProjectId = project.id;
+  saveAppState();
+  openCurrentFile();
+  closeSidebar();
+}
+
+function setSidebarOpen(open) {
+  document.body.classList.toggle("sidebar-open", open);
+}
+
+function toggleSidebar() {
+  setSidebarOpen(!document.body.classList.contains("sidebar-open"));
+}
+
+function closeSidebar() {
+  setSidebarOpen(false);
+}
+
+function ensureFolderInProject(project, folderPath) {
   folderPath = normalizePath(folderPath);
   if (!folderPath) return;
 
@@ -729,198 +751,85 @@ function ensureFolder(folderPath) {
     if (!project.folders.includes(acc)) project.folders.push(acc);
   }
 
-  expandedFolders.add(folderPath);
-  saveProject();
+  let parent = parentPath(folderPath);
+  while (parent) {
+    if (!project.folders.includes(parent)) project.folders.push(parent);
+    parent = parentPath(parent);
+  }
+
+  if (!project.expandedFolders.includes(folderPath)) project.expandedFolders.push(folderPath);
 }
 
-function createFile(filePath, content = "") {
-  filePath = normalizePath(filePath);
-  if (!filePath) return false;
-
-  const dir = parentPath(filePath);
-  if (dir) ensureFolder(dir);
-
-  const finalPath = uniqueFilePath(filePath);
-  project.files[finalPath] = content;
-  saveProject();
-  return finalPath;
-}
-
-function deleteFileOrFolder(path) {
+function uniquePath(project, path) {
   path = normalizePath(path);
-  if (!path) return;
+  if (!path) return path;
+  if (!project.files[path] && !project.folders.includes(path)) return path;
 
-  if (path === project.root) {
-    for (const key of Object.keys(project.files)) delete project.files[key];
-    project.folders = [project.root];
-    expandedFolders = new Set([project.root]);
-    activePreviewFiles = {
-      html: `${project.root}/index.html`,
-      css: `${project.root}/style.css`,
-      js: `${project.root}/app.js`
-    };
-    project.files[`${project.root}/index.html`] = `<h1>New Project</h1>`;
-    project.files[`${project.root}/style.css`] = `body{font-family:sans-serif;padding:20px;}`;
-    project.files[`${project.root}/app.js`] = `console.log("New project");`;
-    currentFile = `${project.root}/index.html`;
-    saveProject();
-    renderAll();
-    openFile(currentFile);
-    setStatus("Project reset");
-    return;
+  const lastDot = path.lastIndexOf(".");
+  const lastSlash = path.lastIndexOf("/");
+  const hasExt = lastDot > lastSlash;
+
+  const base = hasExt ? path.slice(0, lastDot) : path;
+  const ext = hasExt ? path.slice(lastDot) : "";
+
+  let candidate = path;
+  let i = 1;
+  while (project.files[candidate] || project.folders.includes(candidate)) {
+    candidate = `${base} (${i})${ext}`;
+    i++;
   }
-
-  const isFolder = project.folders.includes(path);
-
-  if (isFolder) {
-    const prefix = `${path}/`;
-    for (const f of Object.keys(project.files)) {
-      if (f === path || f.startsWith(prefix)) delete project.files[f];
-    }
-    project.folders = project.folders.filter(f => f !== path && !f.startsWith(prefix));
-    expandedFolders = new Set([...expandedFolders].filter(f => f !== path && !f.startsWith(prefix)));
-
-    if (currentFile === path || currentFile.startsWith(prefix)) currentFile = `${project.root}/index.html`;
-    if (activePreviewFiles.html === path || activePreviewFiles.html.startsWith(prefix)) activePreviewFiles.html = `${project.root}/index.html`;
-    if (activePreviewFiles.css === path || activePreviewFiles.css.startsWith(prefix)) activePreviewFiles.css = `${project.root}/style.css`;
-    if (activePreviewFiles.js === path || activePreviewFiles.js.startsWith(prefix)) activePreviewFiles.js = `${project.root}/app.js`;
-
-    if (!project.files[currentFile]) currentFile = Object.keys(project.files)[0] || "";
-    saveProject();
-    renderAll();
-    if (currentFile) openFile(currentFile);
-    setStatus("Folder deleted");
-    return;
-  }
-
-  delete project.files[path];
-
-  if (currentFile === path) currentFile = `${project.root}/index.html`;
-  if (activePreviewFiles.html === path) activePreviewFiles.html = `${project.root}/index.html`;
-  if (activePreviewFiles.css === path) activePreviewFiles.css = `${project.root}/style.css`;
-  if (activePreviewFiles.js === path) activePreviewFiles.js = `${project.root}/app.js`;
-
-  if (!project.files[currentFile]) currentFile = Object.keys(project.files)[0] || "";
-
-  saveProject();
-  renderAll();
-  if (currentFile) openFile(currentFile);
-  setStatus("Deleted");
+  return candidate;
 }
 
-function renamePath(oldPath, newPath) {
-  oldPath = normalizePath(oldPath);
-  newPath = normalizePath(newPath);
-  if (!oldPath || !newPath || oldPath === newPath) return;
-
-  if (project.files[oldPath] !== undefined) {
-    const target = uniqueFilePath(newPath);
-    const content = project.files[oldPath];
-    delete project.files[oldPath];
-    project.files[target] = content;
-
-    if (currentFile === oldPath) currentFile = target;
-    if (activePreviewFiles.html === oldPath) activePreviewFiles.html = target;
-    if (activePreviewFiles.css === oldPath) activePreviewFiles.css = target;
-    if (activePreviewFiles.js === oldPath) activePreviewFiles.js = target;
-
-    saveProject();
-    renderAll();
-    openFile(target);
-    setStatus("File renamed");
-    return;
-  }
-
-  if (project.folders.includes(oldPath)) {
-    const target = normalizePath(newPath);
-    const oldPrefix = `${oldPath}/`;
-    const newPrefix = `${target}/`;
-
-    project.folders = project.folders.map(f => {
-      if (f === oldPath) return target;
-      if (f.startsWith(oldPrefix)) return `${newPrefix}${f.slice(oldPrefix.length)}`;
-      return f;
-    });
-
-    const movedFiles = {};
-    for (const [key, value] of Object.entries(project.files)) {
-      if (key.startsWith(oldPrefix)) {
-        movedFiles[`${newPrefix}${key.slice(oldPrefix.length)}`] = value;
-      } else if (key === oldPath) {
-        movedFiles[target] = value;
-      } else {
-        movedFiles[key] = value;
-      }
-    }
-    project.files = movedFiles;
-
-    expandedFolders = new Set([...expandedFolders].map(f => {
-      if (f === oldPath) return target;
-      if (f.startsWith(oldPrefix)) return `${newPrefix}${f.slice(oldPrefix.length)}`;
-      return f;
-    }));
-
-    if (currentFile === oldPath || currentFile.startsWith(oldPrefix)) {
-      currentFile = `${newPrefix}${currentFile.slice(oldPrefix.length)}`;
-    }
-
-    if (activePreviewFiles.html === oldPath || activePreviewFiles.html.startsWith(oldPrefix)) {
-      activePreviewFiles.html = `${newPrefix}${activePreviewFiles.html.slice(oldPrefix.length)}`;
-    }
-    if (activePreviewFiles.css === oldPath || activePreviewFiles.css.startsWith(oldPrefix)) {
-      activePreviewFiles.css = `${newPrefix}${activePreviewFiles.css.slice(oldPrefix.length)}`;
-    }
-    if (activePreviewFiles.js === oldPath || activePreviewFiles.js.startsWith(oldPrefix)) {
-      activePreviewFiles.js = `${newPrefix}${activePreviewFiles.js.slice(oldPrefix.length)}`;
-    }
-
-    project.root = project.root === oldPath ? target : project.root;
-    if (!currentFile || !project.files[currentFile]) currentFile = `${project.root}/index.html`;
-
-    saveProject();
-    renderAll();
-    if (project.files[currentFile]) openFile(currentFile);
-    setStatus("Folder renamed");
-  }
-}
-
-function childrenFolders(folderPath) {
+function childrenFolders(project, folderPath) {
   folderPath = normalizePath(folderPath);
   return [...new Set(project.folders)]
     .filter(f => f !== folderPath && parentPath(f) === folderPath)
     .sort((a, b) => baseName(a).localeCompare(baseName(b)));
 }
 
-function childrenFiles(folderPath) {
+function childrenFiles(project, folderPath) {
   folderPath = normalizePath(folderPath);
   return Object.keys(project.files)
     .filter(f => parentPath(f) === folderPath)
     .sort((a, b) => baseName(a).localeCompare(baseName(b)));
 }
 
-function setSidebarOpen(open) {
-  document.body.classList.toggle("sidebar-open", open);
+function currentFileInside(folderPath, filePath) {
+  folderPath = normalizePath(folderPath);
+  filePath = normalizePath(filePath);
+  return filePath === folderPath || filePath.startsWith(`${folderPath}/`);
 }
 
-function closeSidebar() {
-  setSidebarOpen(false);
-}
-
-function toggleSidebar() {
-  setSidebarOpen(!document.body.classList.contains("sidebar-open"));
+function makeNodeButton(symbol, title, handler, extraClass = "") {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = `node-btn ${extraClass}`.trim();
+  btn.title = title;
+  btn.textContent = symbol;
+  btn.addEventListener("click", handler);
+  return btn;
 }
 
 function openFile(path) {
+  const project = activeProject();
   path = normalizePath(path);
   if (!(path in project.files)) return;
 
-  currentFile = path;
+  project.currentFile = path;
+
+  let dir = parentPath(path);
+  while (dir) {
+    if (!project.expandedFolders.includes(dir)) project.expandedFolders.push(dir);
+    dir = parentPath(dir);
+  }
+
   currentFileEl.textContent = path;
 
   const ext = extOf(path);
-  if (["html","htm"].includes(ext)) activePreviewFiles.html = path;
-  if (ext === "css") activePreviewFiles.css = path;
-  if (ext === "js") activePreviewFiles.js = path;
+  if (["html","htm"].includes(ext)) project.activePreviewFiles.html = path;
+  if (ext === "css") project.activePreviewFiles.css = path;
+  if (ext === "js") project.activePreviewFiles.js = path;
 
   if (isImageFile(path)) {
     editor.style.display = "none";
@@ -932,47 +841,85 @@ function openFile(path) {
     editor.value = project.files[path] ?? "";
   }
 
-  saveProject();
-  refreshTree();
+  saveAppState();
+  renderSidebarTree();
   refreshPreview();
 
   if (window.innerWidth < 900) closeSidebar();
 }
 
-function currentActiveClass(path, isFolder = false) {
-  if (!currentFile) return "";
-  if (isFolder) {
-    return currentFile === path || currentFile.startsWith(`${path}/`) ? "active" : "";
+function openCurrentFile() {
+  const project = activeProject();
+  const current = project.currentFile && project.files[project.currentFile]
+    ? project.currentFile
+    : (project.activePreviewFiles?.html || `${project.root}/index.html`);
+
+  if (project.files[current]) {
+    openFile(current);
+  } else {
+    editor.value = "";
+    currentFileEl.textContent = "No file selected";
+    refreshPreview();
   }
-  return currentFile === path ? "active" : "";
 }
 
-function makeNodeButton(symbol, title, handler, colorClass = "") {
-  const btn = document.createElement("button");
-  btn.className = `node-btn ${colorClass}`.trim();
-  btn.type = "button";
-  btn.title = title;
-  btn.textContent = symbol;
-  btn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    handler(e);
+function renderTopLabels() {
+  const project = activeProject();
+  projectNameEl.textContent = project.name || project.root;
+  currentFileEl.textContent = project.currentFile || "No file selected";
+}
+
+function renderProjectList() {
+  const current = activeProject();
+  projectList.innerHTML = "";
+
+  appState.projects.forEach((project) => {
+    const item = document.createElement("div");
+    item.className = `project-item ${project.id === current?.id ? "active" : ""}`.trim();
+
+    const left = document.createElement("div");
+    const strong = document.createElement("strong");
+    strong.textContent = project.name || project.root;
+
+    const small = document.createElement("span");
+    small.textContent = project.root;
+
+    left.appendChild(strong);
+    left.appendChild(document.createElement("br"));
+    left.appendChild(small);
+
+    const right = document.createElement("span");
+    right.textContent = project.id === current?.id ? "active" : "";
+
+    item.appendChild(left);
+    item.appendChild(right);
+
+    item.addEventListener("click", () => setActiveProject(project.id));
+    projectList.appendChild(item);
   });
-  return btn;
 }
 
-function renderFolderNode(folderPath, isRoot = false) {
+function renderSidebarTree() {
+  const project = activeProject();
+  tree.innerHTML = "";
+  tree.appendChild(renderFolderNode(project, project.root, true));
+}
+
+function renderFolderNode(project, folderPath, isRoot = false) {
   const wrap = document.createElement("div");
   wrap.className = "folder-node";
 
   const row = document.createElement("div");
-  row.className = `node-row ${currentActiveClass(folderPath, true)}`.trim();
+  row.className = "node-row";
+  if (project.currentFile && currentFileInside(folderPath, project.currentFile)) row.classList.add("active");
 
   const left = document.createElement("div");
   left.className = "node-left";
 
+  const open = folderPath === project.root || project.expandedFolders.includes(folderPath);
+
   const twisty = document.createElement("span");
   twisty.className = "twisty";
-  const open = expandedFolders.has(folderPath) || isRoot;
   twisty.textContent = open ? "▾" : "▸";
 
   const icon = document.createElement("span");
@@ -990,20 +937,51 @@ function renderFolderNode(folderPath, isRoot = false) {
   const actions = document.createElement("div");
   actions.className = "node-actions";
 
-  actions.appendChild(makeNodeButton("＋F", "New folder", () => createFolderIn(folderPath)));
-  actions.appendChild(makeNodeButton("＋", "New file", () => createFileIn(folderPath)));
-  actions.appendChild(makeNodeButton("⤴", "Import file", () => importFilesTo(folderPath)));
-  actions.appendChild(makeNodeButton("✎", "Rename", () => renameNode(folderPath)));
-  actions.appendChild(makeNodeButton("🗑", "Delete", () => deleteNode(folderPath), "danger"));
+  actions.appendChild(makeNodeButton("📁+", "New folder", async (e) => {
+    e.stopPropagation();
+    await createFolderIn(project, folderPath);
+  }));
+
+  actions.appendChild(makeNodeButton("📄+", "New file", async (e) => {
+    e.stopPropagation();
+    await createFileIn(project, folderPath);
+  }));
+
+  actions.appendChild(makeNodeButton("⤴", "Import", async (e) => {
+    e.stopPropagation();
+    await importFilesTo(project, folderPath);
+  }));
+
+  actions.appendChild(makeNodeButton("✎", "Rename", async (e) => {
+    e.stopPropagation();
+    await renameNode(project, folderPath);
+  }));
+
+  actions.appendChild(makeNodeButton("🗑", "Delete", async (e) => {
+    e.stopPropagation();
+    await deleteNode(project, folderPath);
+  }, "danger"));
 
   row.appendChild(left);
   row.appendChild(actions);
 
-  row.addEventListener("click", () => {
-    if (expandedFolders.has(folderPath)) expandedFolders.delete(folderPath);
-    else expandedFolders.add(folderPath);
-    saveProject();
-    refreshTree();
+  row.addEventListener("click", (e) => {
+    if (e.target.closest(".node-actions")) return;
+
+    if (folderPath === project.root) {
+      if (project.expandedFolders.includes(folderPath)) {
+        project.expandedFolders = project.expandedFolders.filter(f => f !== folderPath);
+      } else {
+        project.expandedFolders.push(folderPath);
+      }
+    } else if (project.expandedFolders.includes(folderPath)) {
+      project.expandedFolders = project.expandedFolders.filter(f => f !== folderPath);
+    } else {
+      project.expandedFolders.push(folderPath);
+    }
+
+    saveAppState();
+    renderSidebarTree();
   });
 
   wrap.appendChild(row);
@@ -1012,12 +990,12 @@ function renderFolderNode(folderPath, isRoot = false) {
     const children = document.createElement("div");
     children.className = "node-children";
 
-    for (const childFolder of childrenFolders(folderPath)) {
-      children.appendChild(renderFolderNode(childFolder, false));
+    for (const childFolder of childrenFolders(project, folderPath)) {
+      children.appendChild(renderFolderNode(project, childFolder, false));
     }
 
-    for (const filePath of childrenFiles(folderPath)) {
-      children.appendChild(renderFileNode(filePath));
+    for (const filePath of childrenFiles(project, folderPath)) {
+      children.appendChild(renderFileNode(project, filePath));
     }
 
     wrap.appendChild(children);
@@ -1026,12 +1004,13 @@ function renderFolderNode(folderPath, isRoot = false) {
   return wrap;
 }
 
-function renderFileNode(filePath) {
+function renderFileNode(project, filePath) {
   const wrap = document.createElement("div");
   wrap.className = "file-node";
 
   const row = document.createElement("div");
-  row.className = `node-row ${currentActiveClass(filePath, false)}`.trim();
+  row.className = "node-row";
+  if (project.currentFile === filePath) row.classList.add("active");
 
   const left = document.createElement("div");
   left.className = "node-left";
@@ -1041,8 +1020,8 @@ function renderFileNode(filePath) {
   twisty.textContent = " ";
 
   const icon = document.createElement("span");
-  icon.className = "node-icon";
-  icon.textContent = isImageFile(filePath) ? "🖼" : "📄";
+  icon.className = `file-badge ${badgeClass(filePath)}`;
+  icon.textContent = fileBadge(filePath);
 
   const name = document.createElement("div");
   name.className = "node-name";
@@ -1054,8 +1033,16 @@ function renderFileNode(filePath) {
 
   const actions = document.createElement("div");
   actions.className = "node-actions";
-  actions.appendChild(makeNodeButton("✎", "Rename", () => renameNode(filePath)));
-  actions.appendChild(makeNodeButton("🗑", "Delete", () => deleteNode(filePath), "danger"));
+
+  actions.appendChild(makeNodeButton("✎", "Rename", async (e) => {
+    e.stopPropagation();
+    await renameNode(project, filePath);
+  }));
+
+  actions.appendChild(makeNodeButton("🗑", "Delete", async (e) => {
+    e.stopPropagation();
+    await deleteNode(project, filePath);
+  }, "danger"));
 
   row.appendChild(left);
   row.appendChild(actions);
@@ -1066,119 +1053,17 @@ function renderFileNode(filePath) {
   return wrap;
 }
 
-function refreshTree() {
-  tree.innerHTML = "";
-  tree.appendChild(renderFolderNode(project.root, true));
-
-  const hint = document.createElement("div");
-  hint.className = "file-meta";
-  hint.textContent = "Tip: folders can be nested. Use / in names or create items inside a folder.";
-  tree.appendChild(hint);
-}
-
-async function createFolderIn(folderPath) {
-  const name = await showInputDialog({
-    title: "Create folder",
-    message: `Folder will be created inside: ${folderPath}`,
-    placeholder: "e.g. images or icons/ui",
-    value: ""
-  });
-
-  if (!name) return;
-
-  const full = uniquePath(joinPath(folderPath, name));
-  ensureFolder(full);
-  saveProject();
-  refreshTree();
-  setStatus(`Folder created: ${full}`);
-}
-
-async function createFileIn(folderPath) {
-  const name = await showInputDialog({
-    title: "Create file",
-    message: `File will be created inside: ${folderPath}`,
-    placeholder: "e.g. page.html or components/card.js",
-    value: "new-file.html"
-  });
-
-  if (!name) return;
-
-  const full = uniqueFilePath(joinPath(folderPath, name));
-  const created = createFile(full, "");
-  if (created) {
-    saveProject();
-    refreshTree();
-    openFile(created);
-    setStatus(`File created: ${created}`);
-  }
-}
-
-async function renameNode(path) {
-  path = normalizePath(path);
-  const current = baseName(path);
-
-  const newName = await showInputDialog({
-    title: "Rename",
-    message: "Enter the new name or path.",
-    placeholder: path,
-    value: current
-  });
-
-  if (!newName) return;
-
-  const isFolder = project.folders.includes(path);
-  const target = isFolder ? joinPath(parentPath(path), newName) : joinPath(parentPath(path), newName);
-  renamePath(path, target);
-}
-
-async function deleteNode(path) {
-  path = normalizePath(path);
-
-  const sure = await showConfirmDialog({
-    title: "Delete",
-    message: `Are you sure you want to delete "${path}"? This cannot be undone.`,
-    okText: "Delete",
-    danger: true
-  });
-
-  if (!sure) return;
-  deleteFileOrFolder(path);
-}
-
-function getAssetContentForSrc(src, htmlFilePath) {
-  if (!src) return src;
-  if (/^(https?:|data:|blob:|#|\/\/)/i.test(src)) return src;
-
-  const resolved = resolveProjectPath(htmlFilePath, src);
-  if (project.files[resolved] !== undefined) return project.files[resolved];
-
-  const direct = normalizePath(src);
-  if (project.files[direct] !== undefined) return project.files[direct];
-
-  return src;
-}
-
-function resolveProjectPath(baseFilePath, relativePath) {
-  const baseDir = parentPath(baseFilePath) || project.root;
-  const combined = `${baseDir}/${relativePath}`.replace(/\\/g, "/");
-  const parts = [];
-
-  for (const part of combined.split("/")) {
-    if (!part || part === ".") continue;
-    if (part === "..") {
-      if (parts.length) parts.pop();
-      continue;
-    }
-    parts.push(part);
-  }
-
-  return parts.join("/");
+function renderAll() {
+  renderProjectList();
+  renderTopLabels();
+  renderSidebarTree();
 }
 
 function refreshPreview() {
-  const htmlPath = activePreviewFiles.html || `${project.root}/index.html`;
-  const cssPath = activePreviewFiles.css || `${project.root}/style.css`;
-  const jsPath = activePreviewFiles.js || `${project.root}/app.js`;
+  const project = activeProject();
+  const htmlPath = project.activePreviewFiles?.html || `${project.root}/index.html`;
+  const cssPath = project.activePreviewFiles?.css || `${project.root}/style.css`;
+  const jsPath = project.activePreviewFiles?.js || `${project.root}/app.js`;
 
   const htmlCode = project.files[htmlPath] || "";
   const cssCode = project.files[cssPath] || "";
@@ -1190,23 +1075,19 @@ function refreshPreview() {
     const doc = new DOMParser().parseFromString(`<div id="root">${htmlCode}</div>`, "text/html");
     const root = doc.getElementById("root");
     if (root) {
-      root.querySelectorAll("img,source,video,audio").forEach((el) => {
-        const attr = el.tagName.toLowerCase() === "source" ? "src" : "src";
-        const src = el.getAttribute(attr);
-        if (src) el.setAttribute(attr, getAssetContentForSrc(src, htmlPath));
-      });
-      root.querySelectorAll("link").forEach((el) => {
-        const href = el.getAttribute("href");
-        if (href) {
-          const resolved = resolveProjectPath(htmlPath, href);
-          if (project.files[resolved] !== undefined && isTextFile(resolved)) {
-            el.setAttribute("href", project.files[resolved]);
-          }
+      root.querySelectorAll("img").forEach((el) => {
+        const src = el.getAttribute("src");
+        if (!src) return;
+        const resolved = resolveProjectPath(htmlPath, src);
+        if (project.files[resolved] !== undefined) {
+          el.setAttribute("src", project.files[resolved]);
+        } else if (project.files[normalizePath(src)] !== undefined) {
+          el.setAttribute("src", project.files[normalizePath(src)]);
         }
       });
       processedHTML = root.innerHTML;
     }
-  } catch (e) {}
+  } catch {}
 
   preview.srcdoc = `<!DOCTYPE html>
 <html>
@@ -1228,38 +1109,19 @@ ${jsCode}
 }
 
 function updateCurrentFileContent() {
-  if (!currentFile || !(currentFile in project.files)) return;
-  if (isImageFile(currentFile)) return;
+  const project = activeProject();
+  if (!project.currentFile || !(project.currentFile in project.files)) return;
+  if (isImageFile(project.currentFile)) return;
 
-  project.files[currentFile] = editor.value;
+  project.files[project.currentFile] = editor.value;
 
-  const ext = extOf(currentFile);
-  if (["html","htm"].includes(ext)) activePreviewFiles.html = currentFile;
-  if (ext === "css") activePreviewFiles.css = currentFile;
-  if (ext === "js") activePreviewFiles.js = currentFile;
+  const ext = extOf(project.currentFile);
+  if (["html","htm"].includes(ext)) project.activePreviewFiles.html = project.currentFile;
+  if (ext === "css") project.activePreviewFiles.css = project.currentFile;
+  if (ext === "js") project.activePreviewFiles.js = project.currentFile;
 
-  saveProject();
+  saveAppState();
   refreshPreview();
-  setStatus("Saved");
-}
-
-function newProject() {
-  showInputDialog({
-    title: "New project",
-    message: "This will create a fresh repo-style project workspace.",
-    placeholder: "Project name",
-    value: "MyProject"
-  }).then((name) => {
-    if (!name) return;
-    project = createDefaultProject(name);
-    expandedFolders = new Set(project.expandedFolders);
-    activePreviewFiles = { ...project.activePreviewFiles };
-    currentFile = project.currentFile;
-    saveProject();
-    refreshTree();
-    openFile(currentFile);
-    setStatus(`Project created: ${project.root}`);
-  });
 }
 
 function openDialogShell() {
@@ -1306,10 +1168,10 @@ function showInputDialog({ title, message, placeholder = "", value = "", okText 
     ok.type = "button";
     ok.textContent = okText;
 
-    function finish(v) {
+    const finish = (result) => {
       closeDialog();
-      resolve(v);
-    }
+      resolve(result);
+    };
 
     cancel.addEventListener("click", () => finish(null));
     ok.addEventListener("click", () => {
@@ -1362,9 +1224,9 @@ function showConfirmDialog({ title, message, okText = "OK", danger = false }) {
     ok.type = "button";
     ok.textContent = okText;
 
-    const finish = (value) => {
+    const finish = (result) => {
       closeDialog();
-      resolve(value);
+      resolve(result);
     };
 
     cancel.addEventListener("click", () => finish(false));
@@ -1379,9 +1241,620 @@ function showConfirmDialog({ title, message, okText = "OK", danger = false }) {
   });
 }
 
-async function importFilesTo(folderPath) {
-  folderPath = normalizePath(folderPath);
-  ensureFolder(folderPath);
+function showFilePicker() {
+  return new Promise((resolve) => {
+    fileInput.value = "";
+    fileInput.onchange = () => {
+      resolve(Array.from(fileInput.files || []));
+    };
+    fileInput.click();
+  });
+}
+
+async function createProjectFromTop() {
+  const name = await showInputDialog({
+    title: "New project",
+    message: "Create a new workspace. Old projects will stay saved.",
+    placeholder: "Project name",
+    value: "MyProject"
+  });
+
+  if (!name) return;
+  createProject(name);
+}
+
+async function createFolderIn(project, folderPath) {
+  const name = await showInputDialog({
+    title: "Create folder",
+    message: `Folder will be created inside: ${folderPath}`,
+    placeholder: "e.g. images or ui/components"
+  });
+
+  if (!name) return;
+
+  const full = uniquePath(project, joinPath(folderPath, name));
+  ensureFolderInProject(project, full);
+  saveAppState();
+  renderAll();
+}
+
+async function createFileIn(project, folderPath) {
+  const name = await showInputDialog({
+    title: "Create file",
+    message: `File will be created inside: ${folderPath}`,
+    placeholder: "e.g. page.html or card.js",
+    value: "new-file.html"
+  });
+
+  if (!name) return;
+
+  const full = uniquePath(project, joinPath(folderPath, name));
+  project.files[full] = "";
+
+  let dir = parentPath(full);
+  while (dir) {
+    if (!project.folders.includes(dir)) project.folders.push(dir);
+    dir = parentPath(dir);
+  }
+
+  saveAppState();
+  renderAll();
+  openFile(full);
+}
+
+async function renameNode(project, path) {
+  const oldPath = normalizePath(path);
+
+  const newName = await showInputDialog({
+    title: "Rename",
+    message: "Enter the new name or path.",
+    placeholder: oldPath,
+    value: baseName(oldPath)
+  });
+
+  if (!newName) return;
+
+  const target = joinPath(parentPath(oldPath), newName);
+
+  if (project.files[oldPath] !== undefined) {
+    const finalTarget = uniquePath(project, target);
+    const content = project.files[oldPath];
+    delete project.files[oldPath];
+    project.files[finalTarget] = content;
+
+    if (project.currentFile === oldPath) project.currentFile = finalTarget;
+    if (project.activePreviewFiles.html === oldPath) project.activePreviewFiles.html = finalTarget;
+    if (project.activePreviewFiles.css === oldPath) project.activePreviewFiles.css = finalTarget;
+    if (project.activePreviewFiles.js === oldPath) project.activePreviewFiles.js = finalTarget;
+  } else if (project.folders.includes(oldPath)) {
+    const finalTarget = normalizePath(target);
+    const oldPrefix = `${oldPath}/`;
+    const newPrefix = `${finalTarget}/`;
+
+    project.folders = project.folders.map(f => {
+      if (f === oldPath) return finalTarget;
+      if (f.startsWith(oldPrefix)) return `${newPrefix}${f.slice(oldPrefix.length)}`;
+      return f;
+    });
+
+    const moved = {};
+    for (const [k, v] of Object.entries(project.files)) {
+      if (k === oldPath) moved[finalTarget] = v;
+      else if (k.startsWith(oldPrefix)) moved[`${newPrefix}${k.slice(oldPrefix.length)}`] = v;
+      else moved[k] = v;
+    }
+    project.files = moved;
+
+    project.expandedFolders = project.expandedFolders.map(f => {
+      if (f === oldPath) return finalTarget;
+      if (f.startsWith(oldPrefix)) return `${newPrefix}${f.slice(oldPrefix.length)}`;
+      return f;
+    });
+
+    if (project.currentFile === oldPath || project.currentFile.startsWith(oldPrefix)) {
+      project.currentFile = `${newPrefix}${project.currentFile.slice(oldPrefix.length)}`;
+    }
+
+    if (project.activePreviewFiles.html === oldPath || project.activePreviewFiles.html.startsWith(oldPrefix)) {
+      project.activePreviewFiles.html = `${newPrefix}${project.activePreviewFiles.html.slice(oldPrefix.length)}`;
+    }
+    if (project.activePreviewFiles.css === oldPath || project.activePreviewFiles.css.startsWith(oldPrefix)) {
+      project.activePreviewFiles.css = `${newPrefix}${project.activePreviewFiles.css.slice(oldPrefix.length)}`;
+    }
+    if (project.activePreviewFiles.js === oldPath || project.activePreviewFiles.js.startsWith(oldPrefix)) {
+      project.activePreviewFiles.js = `${newPrefix}${project.activePreviewFiles.js.slice(oldPrefix.length)}`;
+    }
+
+    if (oldPath === project.root) {
+      project.root = finalTarget;
+      project.name = finalTarget;
+    }
+  }
+
+  saveAppState();
+  renderAll();
+  openCurrentFile();
+}
+
+async function deleteNode(project, path) {
+  const sure = await showConfirmDialog({
+    title: "Delete",
+    message: `Are you sure you want to delete "${path}"?`,
+    okText: "Delete",
+    danger: true
+  });
+
+  if (!sure) return;
+
+  if (path === project.root) {
+    if (appState.projects.length > 1) {
+      appState.projects = appState.projects.filter(p => p.id !== project.id);
+      appState.activeProjectId = appState.projects[0].id;
+      saveAppState();
+      openCurrentFile();
+      return;
+    }
+
+    const reset = createDefaultProject(project.root);
+    project.id = reset.id;
+    project.name = reset.name;
+    project.root = reset.root;
+    project.folders = reset.folders;
+    project.files = reset.files;
+    project.currentFile = reset.currentFile;
+    project.expandedFolders = reset.expandedFolders;
+    project.activePreviewFiles = reset.activePreviewFiles;
+  } else if (project.folders.includes(path)) {
+    const prefix = `${path}/`;
+    for (const k of Object.keys(project.files)) {
+      if (k === path || k.startsWith(prefix)) delete project.files[k];
+    }
+    project.folders = project.folders.filter(f => f !== path && !f.startsWith(prefix));
+    project.expandedFolders = project.expandedFolders.filter(f => f !== path && !f.startsWith(prefix));
+
+    if (project.currentFile === path || project.currentFile.startsWith(prefix)) {
+      project.currentFile = `${project.root}/index.html`;
+    }
+    if (project.activePreviewFiles.html === path || project.activePreviewFiles.html.startsWith(prefix)) {
+      project.activePreviewFiles.html = `${project.root}/index.html`;
+    }
+    if (project.activePreviewFiles.css === path || project.activePreviewFiles.css.startsWith(prefix)) {
+      project.activePreviewFiles.css = `${project.root}/style.css`;
+    }
+    if (project.activePreviewFiles.js === path || project.activePreviewFiles.js.startsWith(prefix)) {
+      project.activePreviewFiles.js = `${project.root}/app.js`;
+    }
+  } else {
+    delete project.files[path];
+    if (project.currentFile === path) project.currentFile = `${project.root}/index.html`;
+    if (project.activePreviewFiles.html === path) project.activePreviewFiles.html = `${project.root}/index.html`;
+    if (project.activePreviewFiles.css === path) project.activePreviewFiles.css = `${project.root}/style.css`;
+    if (project.activePreviewFiles.js === path) project.activePreviewFiles.js = `${project.root}/app.js`;
+  }
+
+  saveAppState();
+  renderAll();
+  openCurrentFile();
+}
+
+async function importFilesTo(project, folderPath) {
+  ensureFolderInProject(project, folderPath);
+  saveAppState();
+
+  const files = await showFilePicker();
+  if (!files.length) return;
+
+  for (const file of files) {
+    const safeName = file.name.replace(/\s+/g, "_");
+    const path = uniquePath(project, joinPath(folderPath, safeName));
+    const content = await readFileSmart(file);
+    project.files[path] = content;
+
+    let dir = parentPath(path);
+    while (dir) {
+      if (!project.folders.includes(dir)) project.folders.push(dir);
+      dir = parentPath(dir);
+    }
+  }
+
+  saveAppState();
+  renderAll();
+  refreshPreview();
+}
+
+function readFileSmart(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+
+    const textLike =
+      file.type.startsWith("text/") ||
+      file.type === "application/json" ||
+      /\.(txt|md|html?|css|js|json|xml|svg|csv|ts|tsx|jsx|scss|sass|less)$/i.test(file.name);
+
+    if (file.type.startsWith("image/")) {
+      reader.readAsDataURL(file);
+    } else if (textLike) {
+      reader.readAsText(file);
+    } else {
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+function resolveProjectPath(baseFilePath, relativePath) {
+  const baseDir = parentPath(baseFilePath) || activeProject().root;
+  const combined = `${baseDir}/${relativePath}`;
+  const parts = [];
+
+  for (const part of combined.split("/")) {
+    if (!part || part === ".") continue;
+    if (part === "..") {
+      if (parts.length) parts.pop();
+      continue;
+    }
+    parts.push(part);
+  }
+
+  return parts.join("/");
+}
+
+function refreshPreview() {
+  const project = activeProject();
+  const htmlPath = project.activePreviewFiles?.html || `${project.root}/index.html`;
+  const cssPath = project.activePreviewFiles?.css || `${project.root}/style.css`;
+  const jsPath = project.activePreviewFiles?.js || `${project.root}/app.js`;
+
+  const htmlCode = project.files[htmlPath] || "";
+  const cssCode = project.files[cssPath] || "";
+  const jsCode = project.files[jsPath] || "";
+
+  let processedHTML = htmlCode;
+
+  try {
+    const doc = new DOMParser().parseFromString(`<div id="root">${htmlCode}</div>`, "text/html");
+    const root = doc.getElementById("root");
+    if (root) {
+      root.querySelectorAll("img").forEach((el) => {
+        const src = el.getAttribute("src");
+        if (!src) return;
+        const resolved = resolveProjectPath(htmlPath, src);
+        if (project.files[resolved] !== undefined) {
+          el.setAttribute("src", project.files[resolved]);
+        } else if (project.files[normalizePath(src)] !== undefined) {
+          el.setAttribute("src", project.files[normalizePath(src)]);
+        }
+      });
+      processedHTML = root.innerHTML;
+    }
+  } catch {}
+
+  preview.srcdoc = `<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>${cssCode}</style>
+</head>
+<body>
+${processedHTML}
+<script>
+try {
+${jsCode}
+} catch (e) {
+  document.body.insertAdjacentHTML("beforeend", "<pre style='color:red;white-space:pre-wrap;padding:12px;'>" + e + "</pre>");
+}
+<\/script>
+</body>
+</html>`;
+}
+
+function openDialogShell() {
+  dialogRoot.innerHTML = "";
+  dialogRoot.classList.add("open");
+}
+
+function closeDialog() {
+  dialogRoot.classList.remove("open");
+  dialogRoot.innerHTML = "";
+}
+
+function showInputDialog({ title, message, placeholder = "", value = "", okText = "OK" }) {
+  return new Promise((resolve) => {
+    openDialogShell();
+
+    const card = document.createElement("div");
+    card.className = "dialog-card";
+
+    const h = document.createElement("div");
+    h.className = "dialog-title";
+    h.textContent = title;
+
+    const p = document.createElement("div");
+    p.className = "dialog-message";
+    p.textContent = message;
+
+    const input = document.createElement("input");
+    input.className = "dialog-input";
+    input.type = "text";
+    input.placeholder = placeholder;
+    input.value = value;
+
+    const actions = document.createElement("div");
+    actions.className = "dialog-actions";
+
+    const cancel = document.createElement("button");
+    cancel.className = "dialog-btn secondary";
+    cancel.type = "button";
+    cancel.textContent = "Cancel";
+
+    const ok = document.createElement("button");
+    ok.className = "dialog-btn primary";
+    ok.type = "button";
+    ok.textContent = okText;
+
+    const finish = (result) => {
+      closeDialog();
+      resolve(result);
+    };
+
+    cancel.addEventListener("click", () => finish(null));
+    ok.addEventListener("click", () => {
+      const val = input.value.trim();
+      finish(val || null);
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") ok.click();
+      if (e.key === "Escape") cancel.click();
+    });
+
+    actions.appendChild(cancel);
+    actions.appendChild(ok);
+    card.appendChild(h);
+    card.appendChild(p);
+    card.appendChild(input);
+    card.appendChild(actions);
+    dialogRoot.appendChild(card);
+
+    setTimeout(() => input.focus(), 0);
+  });
+}
+
+function showConfirmDialog({ title, message, okText = "OK", danger = false }) {
+  return new Promise((resolve) => {
+    openDialogShell();
+
+    const card = document.createElement("div");
+    card.className = "dialog-card";
+
+    const h = document.createElement("div");
+    h.className = "dialog-title";
+    h.textContent = title;
+
+    const p = document.createElement("div");
+    p.className = "dialog-message";
+    p.textContent = message;
+
+    const actions = document.createElement("div");
+    actions.className = "dialog-actions";
+
+    const cancel = document.createElement("button");
+    cancel.className = "dialog-btn secondary";
+    cancel.type = "button";
+    cancel.textContent = "Cancel";
+
+    const ok = document.createElement("button");
+    ok.className = `dialog-btn ${danger ? "danger" : "primary"}`;
+    ok.type = "button";
+    ok.textContent = okText;
+
+    const finish = (result) => {
+      closeDialog();
+      resolve(result);
+    };
+
+    cancel.addEventListener("click", () => finish(false));
+    ok.addEventListener("click", () => finish(true));
+
+    actions.appendChild(cancel);
+    actions.appendChild(ok);
+    card.appendChild(h);
+    card.appendChild(p);
+    card.appendChild(actions);
+    dialogRoot.appendChild(card);
+  });
+}
+
+async function createProjectFromTop() {
+  const name = await showInputDialog({
+    title: "New project",
+    message: "Create a new workspace. Old projects will stay saved.",
+    placeholder: "Project name",
+    value: "MyProject"
+  });
+
+  if (!name) return;
+  createProject(name);
+}
+
+async function createFolderIn(project, folderPath) {
+  const name = await showInputDialog({
+    title: "Create folder",
+    message: `Folder will be created inside: ${folderPath}`,
+    placeholder: "e.g. images or ui/components"
+  });
+
+  if (!name) return;
+
+  const full = uniquePath(project, joinPath(folderPath, name));
+  ensureFolderInProject(project, full);
+  saveAppState();
+  renderAll();
+}
+
+async function createFileIn(project, folderPath) {
+  const name = await showInputDialog({
+    title: "Create file",
+    message: `File will be created inside: ${folderPath}`,
+    placeholder: "e.g. page.html or card.js",
+    value: ""
+  });
+
+  if (!name) return;
+
+  const full = uniquePath(project, joinPath(folderPath, name));
+  project.files[full] = "";
+
+  let dir = parentPath(full);
+  while (dir) {
+    if (!project.folders.includes(dir)) project.folders.push(dir);
+    dir = parentPath(dir);
+  }
+
+  saveAppState();
+  renderAll();
+  openFile(full);
+}
+
+async function renameNode(project, path) {
+  const oldPath = normalizePath(path);
+
+  const newName = await showInputDialog({
+    title: "Rename",
+    message: "Enter the new name or path.",
+    placeholder: oldPath,
+    value: baseName(oldPath)
+  });
+
+  if (!newName) return;
+
+  const target = joinPath(parentPath(oldPath), newName);
+
+  if (project.files[oldPath] !== undefined) {
+    const finalTarget = uniquePath(project, target);
+    const content = project.files[oldPath];
+    delete project.files[oldPath];
+    project.files[finalTarget] = content;
+
+    if (project.currentFile === oldPath) project.currentFile = finalTarget;
+    if (project.activePreviewFiles.html === oldPath) project.activePreviewFiles.html = finalTarget;
+    if (project.activePreviewFiles.css === oldPath) project.activePreviewFiles.css = finalTarget;
+    if (project.activePreviewFiles.js === oldPath) project.activePreviewFiles.js = finalTarget;
+  } else if (project.folders.includes(oldPath)) {
+    const finalTarget = normalizePath(target);
+    const oldPrefix = `${oldPath}/`;
+    const newPrefix = `${finalTarget}/`;
+
+    project.folders = project.folders.map(f => {
+      if (f === oldPath) return finalTarget;
+      if (f.startsWith(oldPrefix)) return `${newPrefix}${f.slice(oldPrefix.length)}`;
+      return f;
+    });
+
+    const moved = {};
+    for (const [k, v] of Object.entries(project.files)) {
+      if (k === oldPath) moved[finalTarget] = v;
+      else if (k.startsWith(oldPrefix)) moved[`${newPrefix}${k.slice(oldPrefix.length)}`] = v;
+      else moved[k] = v;
+    }
+    project.files = moved;
+
+    project.expandedFolders = project.expandedFolders.map(f => {
+      if (f === oldPath) return finalTarget;
+      if (f.startsWith(oldPrefix)) return `${newPrefix}${f.slice(oldPrefix.length)}`;
+      return f;
+    });
+
+    if (project.currentFile === oldPath || project.currentFile.startsWith(oldPrefix)) {
+      project.currentFile = `${newPrefix}${project.currentFile.slice(oldPrefix.length)}`;
+    }
+
+    if (project.activePreviewFiles.html === oldPath || project.activePreviewFiles.html.startsWith(oldPrefix)) {
+      project.activePreviewFiles.html = `${newPrefix}${project.activePreviewFiles.html.slice(oldPrefix.length)}`;
+    }
+    if (project.activePreviewFiles.css === oldPath || project.activePreviewFiles.css.startsWith(oldPrefix)) {
+      project.activePreviewFiles.css = `${newPrefix}${project.activePreviewFiles.css.slice(oldPrefix.length)}`;
+    }
+    if (project.activePreviewFiles.js === oldPath || project.activePreviewFiles.js.startsWith(oldPrefix)) {
+      project.activePreviewFiles.js = `${newPrefix}${project.activePreviewFiles.js.slice(oldPrefix.length)}`;
+    }
+
+    if (oldPath === project.root) {
+      project.root = finalTarget;
+      project.name = finalTarget;
+    }
+  }
+
+  saveAppState();
+  renderAll();
+  openCurrentFile();
+}
+
+async function deleteNode(project, path) {
+  const sure = await showConfirmDialog({
+    title: "Delete",
+    message: `Are you sure you want to delete "${path}"?`,
+    okText: "Delete",
+    danger: true
+  });
+
+  if (!sure) return;
+
+  if (path === project.root) {
+    if (appState.projects.length > 1) {
+      appState.projects = appState.projects.filter(p => p.id !== project.id);
+      appState.activeProjectId = appState.projects[0].id;
+      saveAppState();
+      openCurrentFile();
+      return;
+    }
+
+    const reset = createDefaultProject(project.root);
+    project.id = reset.id;
+    project.name = reset.name;
+    project.root = reset.root;
+    project.folders = reset.folders;
+    project.files = reset.files;
+    project.currentFile = reset.currentFile;
+    project.expandedFolders = reset.expandedFolders;
+    project.activePreviewFiles = reset.activePreviewFiles;
+  } else if (project.folders.includes(path)) {
+    const prefix = `${path}/`;
+    for (const k of Object.keys(project.files)) {
+      if (k === path || k.startsWith(prefix)) delete project.files[k];
+    }
+    project.folders = project.folders.filter(f => f !== path && !f.startsWith(prefix));
+    project.expandedFolders = project.expandedFolders.filter(f => f !== path && !f.startsWith(prefix));
+
+    if (project.currentFile === path || project.currentFile.startsWith(prefix)) {
+      project.currentFile = `${project.root}/index.html`;
+    }
+    if (project.activePreviewFiles.html === path || project.activePreviewFiles.html.startsWith(prefix)) {
+      project.activePreviewFiles.html = `${project.root}/index.html`;
+    }
+    if (project.activePreviewFiles.css === path || project.activePreviewFiles.css.startsWith(prefix)) {
+      project.activePreviewFiles.css = `${project.root}/style.css`;
+    }
+    if (project.activePreviewFiles.js === path || project.activePreviewFiles.js.startsWith(prefix)) {
+      project.activePreviewFiles.js = `${project.root}/app.js`;
+    }
+  } else {
+    delete project.files[path];
+    if (project.currentFile === path) project.currentFile = `${project.root}/index.html`;
+    if (project.activePreviewFiles.html === path) project.activePreviewFiles.html = `${project.root}/index.html`;
+    if (project.activePreviewFiles.css === path) project.activePreviewFiles.css = `${project.root}/style.css`;
+    if (project.activePreviewFiles.js === path) project.activePreviewFiles.js = `${project.root}/app.js`;
+  }
+
+  saveAppState();
+  renderAll();
+  openCurrentFile();
+}
+
+async function importFilesTo(project, folderPath) {
+  ensureFolderInProject(project, folderPath);
+  saveAppState();
 
   fileInput.value = "";
   fileInput.click();
@@ -1390,39 +1863,39 @@ async function importFilesTo(folderPath) {
     const files = Array.from(fileInput.files || []);
     if (!files.length) return;
 
-    let imported = 0;
-
     for (const file of files) {
       const safeName = file.name.replace(/\s+/g, "_");
-      const path = uniqueFilePath(joinPath(folderPath, safeName));
+      const path = uniquePath(project, joinPath(folderPath, safeName));
       const content = await readFileSmart(file);
       project.files[path] = content;
-      imported++;
+
+      let dir = parentPath(path);
+      while (dir) {
+        if (!project.folders.includes(dir)) project.folders.push(dir);
+        dir = parentPath(dir);
+      }
     }
 
-    saveProject();
-    refreshTree();
+    saveAppState();
+    renderAll();
     refreshPreview();
-    setStatus(`${imported} file(s) imported into ${folderPath}`);
   };
 }
 
 function readFileSmart(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-
     reader.onload = () => resolve(reader.result);
-
     reader.onerror = () => reject(reader.error);
 
-    const isTextLike =
+    const textLike =
       file.type.startsWith("text/") ||
       file.type === "application/json" ||
-      /\.(txt|md|html|htm|css|js|json|xml|svg|csv|ts|tsx|jsx|scss|sass|less)$/i.test(file.name);
+      /\.(txt|md|html?|css|js|json|xml|svg|csv|ts|tsx|jsx|scss|sass|less)$/i.test(file.name);
 
     if (file.type.startsWith("image/")) {
       reader.readAsDataURL(file);
-    } else if (isTextLike) {
+    } else if (textLike) {
       reader.readAsText(file);
     } else {
       reader.readAsDataURL(file);
@@ -1430,53 +1903,443 @@ function readFileSmart(file) {
   });
 }
 
+function refreshPreview() {
+  const project = activeProject();
+  const htmlPath = project.activePreviewFiles?.html || `${project.root}/index.html`;
+  const cssPath = project.activePreviewFiles?.css || `${project.root}/style.css`;
+  const jsPath = project.activePreviewFiles?.js || `${project.root}/app.js`;
+
+  const htmlCode = project.files[htmlPath] || "";
+  const cssCode = project.files[cssPath] || "";
+  const jsCode = project.files[jsPath] || "";
+
+  let processedHTML = htmlCode;
+
+  try {
+    const doc = new DOMParser().parseFromString(`<div id="root">${htmlCode}</div>`, "text/html");
+    const root = doc.getElementById("root");
+    if (root) {
+      root.querySelectorAll("img").forEach((el) => {
+        const src = el.getAttribute("src");
+        if (!src) return;
+        const resolved = resolveProjectPath(htmlPath, src);
+        if (project.files[resolved] !== undefined) {
+          el.setAttribute("src", project.files[resolved]);
+        } else if (project.files[normalizePath(src)] !== undefined) {
+          el.setAttribute("src", project.files[normalizePath(src)]);
+        }
+      });
+      processedHTML = root.innerHTML;
+    }
+  } catch {}
+
+  preview.srcdoc = `<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>${cssCode}</style>
+</head>
+<body>
+${processedHTML}
+<script>
+try {
+${jsCode}
+} catch (e) {
+  document.body.insertAdjacentHTML("beforeend", "<pre style='color:red;white-space:pre-wrap;padding:12px;'>" + e + "</pre>");
+}
+<\/script>
+</body>
+</html>`;
+}
+
+function resolveProjectPath(baseFilePath, relativePath) {
+  const baseDir = parentPath(baseFilePath) || activeProject().root;
+  const combined = `${baseDir}/${relativePath}`;
+  const parts = [];
+
+  for (const part of combined.split("/")) {
+    if (!part || part === ".") continue;
+    if (part === "..") {
+      if (parts.length) parts.pop();
+      continue;
+    }
+    parts.push(part);
+  }
+
+  return parts.join("/");
+}
+
+async function createProjectFromTop() {
+  const name = await showInputDialog({
+    title: "New project",
+    message: "Create a new workspace. Old projects will stay saved.",
+    placeholder: "Project name",
+    value: "MyProject"
+  });
+
+  if (!name) return;
+  createProject(name);
+}
+
+async function createFolderIn(project, folderPath) {
+  const name = await showInputDialog({
+    title: "Create folder",
+    message: `Folder will be created inside: ${folderPath}`,
+    placeholder: "e.g. images or ui/components"
+  });
+
+  if (!name) return;
+
+  const full = uniquePath(project, normalizePath(`${folderPath}/${name}`));
+  ensureFolderInProject(project, full);
+  saveAppState();
+  renderAll();
+}
+
+async function createFileIn(project, folderPath) {
+  const name = await showInputDialog({
+    title: "Create file",
+    message: `File will be created inside: ${folderPath}`,
+    placeholder: "e.g. page.html or card.js",
+    value: ""
+  });
+
+  if (!name) return;
+
+  const full = uniquePath(project, normalizePath(`${folderPath}/${name}`));
+  project.files[full] = "";
+
+  let dir = parentPath(full);
+  while (dir) {
+    if (!project.folders.includes(dir)) project.folders.push(dir);
+    dir = parentPath(dir);
+  }
+
+  saveAppState();
+  renderAll();
+  openFile(full);
+}
+
+function openDialogShell() {
+  dialogRoot.innerHTML = "";
+  dialogRoot.classList.add("open");
+}
+
+function closeDialog() {
+  dialogRoot.classList.remove("open");
+  dialogRoot.innerHTML = "";
+}
+
+function showInputDialog({ title, message, placeholder = "", value = "", okText = "OK" }) {
+  return new Promise((resolve) => {
+    openDialogShell();
+
+    const card = document.createElement("div");
+    card.className = "dialog-card";
+
+    const h = document.createElement("div");
+    h.className = "dialog-title";
+    h.textContent = title;
+
+    const p = document.createElement("div");
+    p.className = "dialog-message";
+    p.textContent = message;
+
+    const input = document.createElement("input");
+    input.className = "dialog-input";
+    input.type = "text";
+    input.placeholder = placeholder;
+    input.value = value;
+
+    const actions = document.createElement("div");
+    actions.className = "dialog-actions";
+
+    const cancel = document.createElement("button");
+    cancel.className = "dialog-btn secondary";
+    cancel.type = "button";
+    cancel.textContent = "Cancel";
+
+    const ok = document.createElement("button");
+    ok.className = "dialog-btn primary";
+    ok.type = "button";
+    ok.textContent = okText;
+
+    const finish = (result) => {
+      closeDialog();
+      resolve(result);
+    };
+
+    cancel.addEventListener("click", () => finish(null));
+    ok.addEventListener("click", () => {
+      const val = input.value.trim();
+      finish(val || null);
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") ok.click();
+      if (e.key === "Escape") cancel.click();
+    });
+
+    actions.appendChild(cancel);
+    actions.appendChild(ok);
+    card.appendChild(h);
+    card.appendChild(p);
+    card.appendChild(input);
+    card.appendChild(actions);
+    dialogRoot.appendChild(card);
+
+    setTimeout(() => input.focus(), 0);
+  });
+}
+
+function showConfirmDialog({ title, message, okText = "OK", danger = false }) {
+  return new Promise((resolve) => {
+    openDialogShell();
+
+    const card = document.createElement("div");
+    card.className = "dialog-card";
+
+    const h = document.createElement("div");
+    h.className = "dialog-title";
+    h.textContent = title;
+
+    const p = document.createElement("div");
+    p.className = "dialog-message";
+    p.textContent = message;
+
+    const actions = document.createElement("div");
+    actions.className = "dialog-actions";
+
+    const cancel = document.createElement("button");
+    cancel.className = "dialog-btn secondary";
+    cancel.type = "button";
+    cancel.textContent = "Cancel";
+
+    const ok = document.createElement("button");
+    ok.className = `dialog-btn ${danger ? "danger" : "primary"}`;
+    ok.type = "button";
+    ok.textContent = okText;
+
+    const finish = (result) => {
+      closeDialog();
+      resolve(result);
+    };
+
+    cancel.addEventListener("click", () => finish(false));
+    ok.addEventListener("click", () => finish(true));
+
+    actions.appendChild(cancel);
+    actions.appendChild(ok);
+    card.appendChild(h);
+    card.appendChild(p);
+    card.appendChild(actions);
+    dialogRoot.appendChild(card);
+  });
+}
+
+async function renameNode(project, path) {
+  const oldPath = normalizePath(path);
+
+  const newName = await showInputDialog({
+    title: "Rename",
+    message: "Enter the new name or path.",
+    placeholder: oldPath,
+    value: baseName(oldPath)
+  });
+
+  if (!newName) return;
+
+  const target = normalizePath(joinPath(parentPath(oldPath), newName));
+
+  if (project.files[oldPath] !== undefined) {
+    const finalTarget = uniquePath(project, target);
+    const content = project.files[oldPath];
+    delete project.files[oldPath];
+    project.files[finalTarget] = content;
+
+    if (project.currentFile === oldPath) project.currentFile = finalTarget;
+    if (project.activePreviewFiles.html === oldPath) project.activePreviewFiles.html = finalTarget;
+    if (project.activePreviewFiles.css === oldPath) project.activePreviewFiles.css = finalTarget;
+    if (project.activePreviewFiles.js === oldPath) project.activePreviewFiles.js = finalTarget;
+  } else if (project.folders.includes(oldPath)) {
+    const finalTarget = normalizePath(target);
+    const oldPrefix = `${oldPath}/`;
+    const newPrefix = `${finalTarget}/`;
+
+    project.folders = project.folders.map(f => {
+      if (f === oldPath) return finalTarget;
+      if (f.startsWith(oldPrefix)) return `${newPrefix}${f.slice(oldPrefix.length)}`;
+      return f;
+    });
+
+    const moved = {};
+    for (const [k, v] of Object.entries(project.files)) {
+      if (k === oldPath) moved[finalTarget] = v;
+      else if (k.startsWith(oldPrefix)) moved[`${newPrefix}${k.slice(oldPrefix.length)}`] = v;
+      else moved[k] = v;
+    }
+    project.files = moved;
+
+    project.expandedFolders = project.expandedFolders.map(f => {
+      if (f === oldPath) return finalTarget;
+      if (f.startsWith(oldPrefix)) return `${newPrefix}${f.slice(oldPrefix.length)}`;
+      return f;
+    });
+
+    if (project.currentFile === oldPath || project.currentFile.startsWith(oldPrefix)) {
+      project.currentFile = `${newPrefix}${project.currentFile.slice(oldPrefix.length)}`;
+    }
+
+    if (project.activePreviewFiles.html === oldPath || project.activePreviewFiles.html.startsWith(oldPrefix)) {
+      project.activePreviewFiles.html = `${newPrefix}${project.activePreviewFiles.html.slice(oldPrefix.length)}`;
+    }
+    if (project.activePreviewFiles.css === oldPath || project.activePreviewFiles.css.startsWith(oldPrefix)) {
+      project.activePreviewFiles.css = `${newPrefix}${project.activePreviewFiles.css.slice(oldPrefix.length)}`;
+    }
+    if (project.activePreviewFiles.js === oldPath || project.activePreviewFiles.js.startsWith(oldPrefix)) {
+      project.activePreviewFiles.js = `${newPrefix}${project.activePreviewFiles.js.slice(oldPrefix.length)}`;
+    }
+
+    if (oldPath === project.root) {
+      project.root = finalTarget;
+      project.name = finalTarget;
+    }
+  }
+
+  saveAppState();
+  renderAll();
+  openCurrentFile();
+}
+
+async function deleteNode(project, path) {
+  const sure = await showConfirmDialog({
+    title: "Delete",
+    message: `Are you sure you want to delete "${path}"?`,
+    okText: "Delete",
+    danger: true
+  });
+
+  if (!sure) return;
+
+  if (path === project.root) {
+    if (appState.projects.length > 1) {
+      appState.projects = appState.projects.filter(p => p.id !== project.id);
+      appState.activeProjectId = appState.projects[0].id;
+      saveAppState();
+      openCurrentFile();
+      return;
+    }
+
+    const reset = createDefaultProject(project.root);
+    project.id = reset.id;
+    project.name = reset.name;
+    project.root = reset.root;
+    project.folders = reset.folders;
+    project.files = reset.files;
+    project.currentFile = reset.currentFile;
+    project.expandedFolders = reset.expandedFolders;
+    project.activePreviewFiles = reset.activePreviewFiles;
+  } else if (project.folders.includes(path)) {
+    const prefix = `${path}/`;
+    for (const k of Object.keys(project.files)) {
+      if (k === path || k.startsWith(prefix)) delete project.files[k];
+    }
+    project.folders = project.folders.filter(f => f !== path && !f.startsWith(prefix));
+    project.expandedFolders = project.expandedFolders.filter(f => f !== path && !f.startsWith(prefix));
+
+    if (project.currentFile === path || project.currentFile.startsWith(prefix)) {
+      project.currentFile = `${project.root}/index.html`;
+    }
+    if (project.activePreviewFiles.html === path || project.activePreviewFiles.html.startsWith(prefix)) {
+      project.activePreviewFiles.html = `${project.root}/index.html`;
+    }
+    if (project.activePreviewFiles.css === path || project.activePreviewFiles.css.startsWith(prefix)) {
+      project.activePreviewFiles.css = `${project.root}/style.css`;
+    }
+    if (project.activePreviewFiles.js === path || project.activePreviewFiles.js.startsWith(prefix)) {
+      project.activePreviewFiles.js = `${project.root}/app.js`;
+    }
+  } else {
+    delete project.files[path];
+    if (project.currentFile === path) project.currentFile = `${project.root}/index.html`;
+    if (project.activePreviewFiles.html === path) project.activePreviewFiles.html = `${project.root}/index.html`;
+    if (project.activePreviewFiles.css === path) project.activePreviewFiles.css = `${project.root}/style.css`;
+    if (project.activePreviewFiles.js === path) project.activePreviewFiles.js = `${project.root}/app.js`;
+  }
+
+  saveAppState();
+  renderAll();
+  openCurrentFile();
+}
+
+function showFilePicker() {
+  return new Promise((resolve) => {
+    fileInput.value = "";
+    fileInput.onchange = () => {
+      resolve(Array.from(fileInput.files || []));
+    };
+    fileInput.click();
+  });
+}
+
+async function importFilesTo(project, folderPath) {
+  ensureFolderInProject(project, folderPath);
+  saveAppState();
+
+  const files = await showFilePicker();
+  if (!files.length) return;
+
+  for (const file of files) {
+    const safeName = file.name.replace(/\s+/g, "_");
+    const path = uniquePath(project, normalizePath(`${folderPath}/${safeName}`));
+    const content = await readFileSmart(file);
+    project.files[path] = content;
+
+    let dir = parentPath(path);
+    while (dir) {
+      if (!project.folders.includes(dir)) project.folders.push(dir);
+      dir = parentPath(dir);
+    }
+  }
+
+  saveAppState();
+  renderAll();
+  refreshPreview();
+}
+
+function newProjectFromButton() {
+  createProjectFromTop();
+}
+
 menuBtn.addEventListener("click", toggleSidebar);
 backdrop.addEventListener("click", closeSidebar);
-newProjectBtn.addEventListener("click", newProject);
-
+newProjectBtn.addEventListener("click", createProjectFromTop);
 editor.addEventListener("input", updateCurrentFileContent);
-window.addEventListener("beforeunload", saveProject);
 dialogRoot.addEventListener("click", (e) => {
   if (e.target === dialogRoot) closeDialog();
 });
-
-function renderAll() {
-  projectNameEl.textContent = project.root;
-  currentFileEl.textContent = currentFile || "No file selected";
-  refreshTree();
-  saveProject();
-}
-
-function openCurrentIfPossible() {
-  if (!project.files[currentFile]) {
-    currentFile = project.activePreviewFiles.html || `${project.root}/index.html`;
+tree.addEventListener("click", (e) => {
+  if (e.target === tree) {
+    const project = activeProject();
+    project.expandedFolders = [project.root];
+    saveAppState();
+    renderSidebarTree();
   }
-
-  if (project.files[currentFile]) {
-    openFile(currentFile);
-  } else {
-    editor.value = "";
-    imagePreviewWrap.style.display = "none";
-    editor.style.display = "block";
-    currentFileEl.textContent = "No file selected";
-    refreshPreview();
-  }
-}
+});
+window.addEventListener("beforeunload", saveAppState);
 
 function init() {
-  project = normalizeProject(project);
-  currentFile = project.currentFile || `${project.root}/index.html`;
-  expandedFolders = new Set(project.expandedFolders || [project.root]);
-  activePreviewFiles = project.activePreviewFiles || {
-    html: `${project.root}/index.html`,
-    css: `${project.root}/style.css`,
-    js: `${project.root}/app.js`
-  };
+  if (!appState.projects?.length) appState = defaultState();
+
+  appState.projects = appState.projects.map(normalizeProject);
+
+  if (!appState.projects.find(p => p.id === appState.activeProjectId)) {
+    appState.activeProjectId = appState.projects[0].id;
+  }
 
   renderAll();
-  openCurrentIfPossible();
-  setSidebarOpen(false);
-  setStatus("Ready");
+  openCurrentFile();
+  closeSidebar();
 }
 
 init();
