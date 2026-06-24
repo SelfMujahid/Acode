@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Live Project Editor</title>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
 <style>
 :root{
   --bg:#0f172a;
@@ -129,7 +131,7 @@ body.sidebar-open #sidebar{
 #tree{
   flex:1;
   overflow:auto;
-  padding:10px 10px 18px;
+  padding:15px 10px;
 }
 
 #tree::-webkit-scrollbar,
@@ -151,66 +153,96 @@ body.sidebar-open #sidebar{
 
 .folder-node,
 .file-node{
-  margin-bottom:4px;
+  margin-bottom:0px;
+  position: relative;
 }
 
 .node-row{
   display:flex;
   align-items:center;
-  gap:8px;
-  padding:9px 10px;
-  border-radius:12px;
-  transition:background var(--transition), transform var(--transition);
+  gap:6px;
+  padding:5px 8px;
+  border-radius:6px;
+  transition:background var(--transition);
   user-select:none;
+  cursor:pointer;
+  height: 28px;
 }
 
 .node-row:hover{
-  background:rgba(255,255,255,.05);
+  background:rgba(255,255,255,.04);
 }
 
 .node-row.active{
-  background:rgba(0,194,255,.10);
-  outline:1px solid rgba(0,194,255,.18);
+  background:rgba(0,194,255,.08);
+  outline:1px solid rgba(0,194,255,.15);
 }
 
 .node-left{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:6px;
   min-width:0;
   flex:1;
+  height: 100%;
 }
 
-.twisty{
-  width:16px;
-  text-align:center;
-  color:var(--muted);
-  font-size:12px;
-  flex:0 0 auto;
+.indent-spacer {
+  width: 18px;
+  height: 100%;
+  flex: 0 0 auto;
+}
+
+.twisty {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.twisty::after {
+  content: '';
+  display: block;
+  width: 4.25px;
+  height: 4.25px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--transition);
+}
+
+.twisty.open::after {
+  transform: rotate(45deg);
+}
+
+/* Vertical Border Line added precisely under arrow/twisty layout */
+.node-children {
+  position: relative;
+  margin-left: 14px; 
+  padding-left: 11px;
+  border-left: 1px dashed rgba(255, 255, 255, 0.15);
 }
 
 .node-icon{
-  width:18px;
+  width:16px;
   text-align:center;
   flex:0 0 auto;
+  font-size:14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.file-badge{
-  min-width:42px;
-  padding:2px 7px;
-  border-radius:999px;
-  font-size:10px;
-  font-weight:800;
-  text-align:center;
-  color:#061018;
-  background:#cbd5e1;
-}
-
-.badge-html{ background:#ffd166; }
-.badge-css{ background:#67e8f9; }
-.badge-js{ background:#facc15; }
-.badge-img{ background:#86efac; }
-.badge-txt{ background:#cbd5e1; }
+/* Custom Coloring for FontAwesome Original Icons */
+.fa-html5 { color: #e34c26; }
+.fa-css3-alt { color: #264de4; }
+.fa-js { color: #f7df1e; }
+.fa-image { color: #4acc87; }
+.fa-file-code { color: #cbd5e1; }
+.fa-folder { color: #e2b93b; }
 
 .node-name{
   min-width:0;
@@ -218,46 +250,40 @@ body.sidebar-open #sidebar{
   text-overflow:ellipsis;
   white-space:nowrap;
   font-size:13px;
-  font-weight:600;
+  font-weight:500;
 }
 
 .node-actions{
   display:flex;
-  gap:5px;
+  gap:4px;
   flex:0 0 auto;
+  position:relative;
 }
 
 .node-btn{
   border:none;
   cursor:pointer;
-  width:30px;
-  height:30px;
-  border-radius:10px;
-  background:rgba(255,255,255,.06);
+  width:100%;
+  padding:8px 12px;
+  border-radius:6px;
+  background:transparent;
   color:var(--text);
-  transition:transform var(--transition), background var(--transition), border-color var(--transition);
+  transition:background var(--transition);
   display:inline-flex;
   align-items:center;
-  justify-content:center;
+  justify-content:flex-start;
   font-size:13px;
-  border:1px solid rgba(255,255,255,.07);
+  text-align:left;
+  gap: 8px;
 }
 
 .node-btn:hover{
   background:rgba(0,194,255,.12);
-  border-color:rgba(0,194,255,.22);
-  transform:translateY(-1px);
 }
 
 .node-btn.danger:hover{
   background:rgba(246,70,93,.16);
-  border-color:rgba(246,70,93,.25);
-}
-
-.node-children{
-  margin-left:18px;
-  padding-left:10px;
-  border-left:1px dashed rgba(255,255,255,.10);
+  color:var(--danger);
 }
 
 #app{
@@ -325,12 +351,41 @@ body.sidebar-open #sidebar{
 }
 
 #editor-pane{
-  height:30%;
-  min-height:180px;
+  height:35%;
+  min-height:220px;
   display:flex;
   flex-direction:column;
   border-bottom:1px solid var(--line);
   background:rgba(255,255,255,.02);
+}
+
+/* Code Editor Header Toolbar Styles */
+#editor-toolbar{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 12px;
+  background:#09111f;
+  border-bottom:1px solid var(--line);
+}
+
+.toolbar-btn{
+  background:transparent;
+  border:none;
+  color:var(--muted);
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  transition:background var(--transition), color var(--transition);
+}
+
+.toolbar-btn:hover{
+  background:rgba(255,255,255,.06);
+  color:var(--text);
 }
 
 #editor{
@@ -464,10 +519,6 @@ input[type="file"]{
   color:white;
 }
 
-.node-actions{
-  position:relative;
-}
-
 .menu-btn{
   background:none;
   border:none;
@@ -487,22 +538,9 @@ input[type="file"]{
   display:none;
   flex-direction:column;
   min-width:170px;
-  z-index:1000;
+  z-index:99;
   overflow:hidden;
-}
-
-.context-menu button{
-  width:100%;
-  background:none;
-  border:none;
-  color:white;
-  text-align:left;
-  padding:10px;
-  cursor:pointer;
-}
-
-.context-menu button:hover{
-  background:#333;
+  box-shadow: var(--shadow);
 }
 
 @media (max-width: 900px){
@@ -543,6 +581,12 @@ input[type="file"]{
 
   <div id="workspace">
     <div id="editor-pane">
+      <div id="editor-toolbar">
+        <button class="toolbar-btn" id="tb-cut" title="Cut"><i class="fa-solid fa-scissors"></i></button>
+        <button class="toolbar-btn" id="tb-copy" title="Copy"><i class="fa-solid fa-copy"></i></button>
+        <button class="toolbar-btn" id="tb-paste" title="Paste"><i class="fa-solid fa-clipboard"></i></button>
+        <button class="toolbar-btn" id="tb-selectall" title="Select All"><i class="fa-solid fa-bars"></i></button>
+      </div>
       <textarea id="editor" spellcheck="false"></textarea>
       <div id="image-preview-wrap">
         <img id="image-preview" alt="preview" />
@@ -572,7 +616,22 @@ const fileInput = document.getElementById("fileInput");
 const imagePreviewWrap = document.getElementById("image-preview-wrap");
 const imagePreview = document.getElementById("image-preview");
 
+// Toolbar Buttons
+const tbCut = document.getElementById("tb-cut");
+const tbCopy = document.getElementById("tb-copy");
+const tbPaste = document.getElementById("tb-paste");
+const tbSelectAll = document.getElementById("tb-selectall");
+
 let appState = loadAppState();
+
+// Global clipboard tracking variables
+let clipboard = {
+  sourcePath: null,
+  operation: null 
+};
+
+// Text Editor Virtual Clipboard
+let editorClipboardText = "";
 
 function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
@@ -601,6 +660,10 @@ function baseName(path) {
   return idx === -1 ? path : path.slice(idx + 1);
 }
 
+function joinPath(p1, p2) {
+  return normalizePath(`${p1}/${p2}`);
+}
+
 function extOf(path) {
   const name = baseName(path);
   const idx = name.lastIndexOf(".");
@@ -611,23 +674,13 @@ function isImageFile(path) {
   return ["png","jpg","jpeg","gif","webp","bmp","svg","avif"].includes(extOf(path));
 }
 
-function fileBadge(path) {
-  if (isImageFile(path)) return "IMG";
+function getFileIconClass(path) {
+  if (isImageFile(path)) return "fa-solid fa-file-image";
   const ext = extOf(path);
-  if (["html","htm"].includes(ext)) return "HTML";
-  if (ext === "css") return "CSS";
-  if (ext === "js") return "JS";
-  if (ext) return ext.toUpperCase();
-  return "FILE";
-}
-
-function badgeClass(path) {
-  if (isImageFile(path)) return "badge-img";
-  const ext = extOf(path);
-  if (["html","htm"].includes(ext)) return "badge-html";
-  if (ext === "css") return "badge-css";
-  if (ext === "js") return "badge-js";
-  return "badge-txt";
+  if (["html","htm"].includes(ext)) return "fa-brands fa-html5";
+  if (ext === "css") return "fa-brands fa-css3-alt";
+  if (ext === "js") return "fa-brands fa-js";
+  return "fa-solid fa-file-code";
 }
 
 function sanitizeProjectName(name) {
@@ -834,18 +887,18 @@ function childrenFiles(project, folderPath) {
     .sort((a, b) => baseName(a).localeCompare(baseName(b)));
 }
 
-function currentFileInside(folderPath, filePath) {
-  folderPath = normalizePath(folderPath);
-  filePath = normalizePath(filePath);
-  return filePath === folderPath || filePath.startsWith(`${folderPath}/`);
-}
-
 function makeNodeButton(symbol, title, handler, extraClass = "") {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = `node-btn ${extraClass}`.trim();
   btn.title = title;
-  btn.textContent = symbol;
+  
+  if (symbol.startsWith("<")) {
+    btn.innerHTML = symbol;
+  } else {
+    btn.textContent = symbol;
+  }
+  
   btn.addEventListener("click", handler);
   return btn;
 }
@@ -872,10 +925,12 @@ function openFile(path) {
 
   if (isImageFile(path)) {
     editor.style.display = "none";
+    document.getElementById("editor-toolbar").style.display = "none";
     imagePreviewWrap.style.display = "flex";
     imagePreview.src = project.files[path];
   } else {
     imagePreviewWrap.style.display = "none";
+    document.getElementById("editor-toolbar").style.display = "flex";
     editor.style.display = "block";
     editor.value = project.files[path] ?? "";
   }
@@ -906,7 +961,7 @@ function renderTopLabels() {
   currentFileEl.textContent = project.currentFile || "No file selected";
 }
 
-function renderProjectList() {
+function projectListRenderer() {
   const current = activeProject();
   projectList.innerHTML = "";
 
@@ -935,107 +990,109 @@ function renderProjectList() {
     projectList.appendChild(item);
   });
 }
+// Alias tracking references
+const renderProjectList = projectListRenderer;
 
 function renderSidebarTree() {
   const project = activeProject();
   tree.innerHTML = "";
-  tree.appendChild(renderFolderNode(project, project.root, true));
+  
+  const rootContainer = document.createElement("div");
+  rootContainer.appendChild(renderFolderNode(project, project.root, 0));
+  tree.appendChild(rootContainer);
 }
 
-function renderFolderNode(project, folderPath, isRoot = false) {
+function renderFolderNode(project, folderPath, depth = 0) {
+  const folderName = folderPath.split("/").pop() || project.name;
+  
   const wrap = document.createElement("div");
   wrap.className = "folder-node";
 
   const row = document.createElement("div");
   row.className = "node-row";
-  if (project.currentFile && currentFileInside(folderPath, project.currentFile)) row.classList.add("active");
 
   const left = document.createElement("div");
   left.className = "node-left";
 
-  const open = folderPath === project.root || project.expandedFolders.includes(folderPath);
+  const open = project.expandedFolders.includes(folderPath);
 
   const twisty = document.createElement("span");
-  twisty.className = "twisty";
-  twisty.textContent = open ? "▾" : "▸";
+  twisty.className = `twisty ${open ? "open" : ""}`.trim();
 
   const icon = document.createElement("span");
   icon.className = "node-icon";
-  icon.textContent = "📁";
+  icon.innerHTML = `<i class="fa-solid fa-folder"></i>`;
 
-  const name = document.createElement("div");
+  const name = document.createElement("span");
   name.className = "node-name";
-  name.textContent = isRoot ? project.root : baseName(folderPath);
+  name.textContent = folderName;
 
   left.appendChild(twisty);
-  left.appendChild(icon);
+  left.appendChild(icon); 
   left.appendChild(name);
 
   const actions = document.createElement("div");
-actions.className = "node-actions";
+  actions.className = "node-actions";
 
-const menuBtn = document.createElement("button");
-menuBtn.className = "menu-btn";
-menuBtn.textContent = "⋮";
+  const menuBtn = document.createElement("button");
+  menuBtn.className = "menu-btn";
+  menuBtn.textContent = "⋮";
 
-const menu = document.createElement("div");
-menu.className = "context-menu";
+  const menu = document.createElement("div");
+  menu.className = "context-menu";
 
-menu.appendChild(makeNodeButton("📁 New Folder", "New folder", async (e) => {
-  e.stopPropagation();
-  await createFolderIn(project, folderPath);
-}));
+  menu.appendChild(makeNodeButton("📁 New Folder", "New folder", async (e) => {
+    e.stopPropagation();
+    await createFolderIn(project, folderPath);
+  }));
 
-menu.appendChild(makeNodeButton("📄 New File", "New file", async (e) => {
-  e.stopPropagation();
-  await createFileIn(project, folderPath);
-}));
+  menu.appendChild(makeNodeButton("📄 New File", "New file", async (e) => {
+    e.stopPropagation();
+    await createFileIn(project, folderPath);
+  }));
 
-menu.appendChild(makeNodeButton("⤴ Import", "Import", async (e) => {
-  e.stopPropagation();
-  await importFilesTo(project, folderPath);
-}));
+  const pasteBtn = makeNodeButton(`<i class="fa-solid fa-clipboard"></i> Paste`, "Paste", async (e) => {
+    e.stopPropagation();
+    await pasteNodeTo(project, folderPath);
+  });
+  if (!clipboard.sourcePath) {
+    pasteBtn.style.opacity = "0.5";
+  }
+  menu.appendChild(pasteBtn);
 
-menu.appendChild(makeNodeButton("✎ Rename", "Rename", async (e) => {
-  e.stopPropagation();
-  await renameNode(project, folderPath);
-}));
+  menu.appendChild(makeNodeButton("⤴ Import", "Import", async (e) => {
+    e.stopPropagation();
+    await importFilesTo(project, folderPath);
+  }));
 
-menu.appendChild(makeNodeButton("🗑 Delete", "Delete", async (e) => {
-  e.stopPropagation();
-  await deleteNode(project, folderPath);
-}, "danger"));
+  menu.appendChild(makeNodeButton("✎ Rename", "Rename", async (e) => {
+    e.stopPropagation();
+    await renameNode(project, folderPath);
+  }));
 
-menuBtn.addEventListener("click", (e) => {
+  menu.appendChild(makeNodeButton("🗑 Delete", "Delete", async (e) => {
+    e.stopPropagation();
+    await deleteNode(project, folderPath);
+  }, "danger"));
 
-  e.stopPropagation();
-
-  document.querySelectorAll(".context-menu").forEach(m => {
-    if (m !== menu) m.style.display = "none";
+  menuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    document.querySelectorAll(".context-menu").forEach(m => {
+      if (m !== menu) m.style.display = "none";
+    });
+    menu.style.display = menu.style.display === "flex" ? "none" : "flex";
   });
 
-  menu.style.display =
-    menu.style.display === "flex"
-    ? "none"
-    : "flex";
-});
+  actions.appendChild(menuBtn);
+  actions.appendChild(menu);
 
-actions.appendChild(menuBtn);
-actions.appendChild(menu);
-
-row.appendChild(left);
-row.appendChild(actions);
+  row.appendChild(left);
+  row.appendChild(actions);
 
   row.addEventListener("click", (e) => {
     if (e.target.closest(".node-actions")) return;
 
-    if (folderPath === project.root) {
-      if (project.expandedFolders.includes(folderPath)) {
-        project.expandedFolders = project.expandedFolders.filter(f => f !== folderPath);
-      } else {
-        project.expandedFolders.push(folderPath);
-      }
-    } else if (project.expandedFolders.includes(folderPath)) {
+    if (project.expandedFolders.includes(folderPath)) {
       project.expandedFolders = project.expandedFolders.filter(f => f !== folderPath);
     } else {
       project.expandedFolders.push(folderPath);
@@ -1048,24 +1105,24 @@ row.appendChild(actions);
   wrap.appendChild(row);
 
   if (open) {
-    const children = document.createElement("div");
-    children.className = "node-children";
-
-    for (const childFolder of childrenFolders(project, folderPath)) {
-      children.appendChild(renderFolderNode(project, childFolder, false));
-    }
+    const childrenContainer = document.createElement("div");
+    childrenContainer.className = "node-children";
 
     for (const filePath of childrenFiles(project, folderPath)) {
-      children.appendChild(renderFileNode(project, filePath));
+      childrenContainer.appendChild(renderFileNode(project, filePath, depth + 1));
     }
 
-    wrap.appendChild(children);
+    for (const childFolder of childrenFolders(project, folderPath)) {
+      childrenContainer.appendChild(renderFolderNode(project, childFolder, depth + 1));
+    }
+
+    wrap.appendChild(childrenContainer);
   }
 
   return wrap;
 }
 
-function renderFileNode(project, filePath) {
+function renderFileNode(project, filePath, depth = 0) {
   const wrap = document.createElement("div");
   wrap.className = "file-node";
 
@@ -1078,11 +1135,11 @@ function renderFileNode(project, filePath) {
 
   const twisty = document.createElement("span");
   twisty.className = "twisty";
-  twisty.textContent = " ";
+  twisty.style.visibility = "hidden"; 
 
   const icon = document.createElement("span");
-  icon.className = `file-badge ${badgeClass(filePath)}`;
-  icon.textContent = fileBadge(filePath);
+  icon.className = "node-icon";
+  icon.innerHTML = `<i class="${getFileIconClass(filePath)}"></i>`;
 
   const name = document.createElement("div");
   name.className = "node-name";
@@ -1093,40 +1150,49 @@ function renderFileNode(project, filePath) {
   left.appendChild(name);
 
   const actions = document.createElement("div");
-actions.className = "node-actions";
+  actions.className = "node-actions";
 
-const menuBtn = document.createElement("button");
-menuBtn.className = "menu-btn";
-menuBtn.textContent = "⋮";
+  const menuBtn = document.createElement("button");
+  menuBtn.className = "menu-btn";
+  menuBtn.textContent = "⋮";
 
-const menu = document.createElement("div");
-menu.className = "context-menu";
+  const menu = document.createElement("div");
+  menu.className = "context-menu";
 
-menu.appendChild(makeNodeButton("✎ Rename", "Rename", async (e) => {
-  e.stopPropagation();
-  await renameNode(project, filePath);
-}));
+  menu.appendChild(makeNodeButton(`<i class="fa-solid fa-copy"></i> Copy`, "Copy", (e) => {
+    e.stopPropagation();
+    clipboard.sourcePath = filePath;
+    clipboard.operation = "copy";
+    menu.style.display = "none";
+  }));
 
-menu.appendChild(makeNodeButton("🗑 Delete", "Delete", async (e) => {
-  e.stopPropagation();
-  await deleteNode(project, filePath);
-}, "danger"));
+  menu.appendChild(makeNodeButton(`<i class="fa-solid fa-scissors"></i> Cut`, "Cut", (e) => {
+    e.stopPropagation();
+    clipboard.sourcePath = filePath;
+    clipboard.operation = "cut";
+    menu.style.display = "none";
+  }));
 
-menuBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
+  menu.appendChild(makeNodeButton("✎ Rename", "Rename", async (e) => {
+    e.stopPropagation();
+    await renameNode(project, filePath);
+  }));
 
-  document.querySelectorAll(".context-menu").forEach(m => {
-    if (m !== menu) m.style.display = "none";
+  menu.appendChild(makeNodeButton("🗑 Delete", "Delete", async (e) => {
+    e.stopPropagation();
+    await deleteNode(project, filePath);
+  }, "danger"));
+
+  menuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    document.querySelectorAll(".context-menu").forEach(m => {
+      if (m !== menu) m.style.display = "none";
+    });
+    menu.style.display = menu.style.display === "flex" ? "none" : "flex";
   });
 
-  menu.style.display =
-    menu.style.display === "flex"
-    ? "none"
-    : "flex";
-});
-
-actions.appendChild(menuBtn);
-actions.appendChild(menu);
+  actions.appendChild(menuBtn);
+  actions.appendChild(menu);
 
   row.appendChild(left);
   row.appendChild(actions);
@@ -1237,7 +1303,7 @@ function showInputDialog({ title, message, placeholder = "", value = "", okText 
     input.className = "dialog-input";
     input.type = "text";
     input.placeholder = placeholder;
-    input.value = value;
+    input.value = value; 
 
     const actions = document.createElement("div");
     actions.className = "dialog-actions";
@@ -1340,7 +1406,7 @@ async function createProjectFromTop() {
     title: "New project",
     message: "Create a new workspace. Old projects will stay saved.",
     placeholder: "Project name",
-    value: "MyProject"
+    value: "" 
   });
 
   if (!name) return;
@@ -1351,7 +1417,8 @@ async function createFolderIn(project, folderPath) {
   const name = await showInputDialog({
     title: "Create folder",
     message: `Folder will be created inside: ${folderPath}`,
-    placeholder: "e.g. images or ui/components"
+    placeholder: "e.g. images or ui/components",
+    value: "" 
   });
 
   if (!name) return;
@@ -1367,7 +1434,7 @@ async function createFileIn(project, folderPath) {
     title: "Create file",
     message: `File will be created inside: ${folderPath}`,
     placeholder: "e.g. page.html or card.js",
-    value: "new-file.html"
+    value: "" 
   });
 
   if (!name) return;
@@ -1384,6 +1451,34 @@ async function createFileIn(project, folderPath) {
   saveAppState();
   renderAll();
   openFile(full);
+}
+
+async function pasteNodeTo(project, targetFolderPath) {
+  if (!clipboard.sourcePath || !clipboard.operation) return;
+  
+  const content = project.files[clipboard.sourcePath];
+  if (content === undefined) return;
+
+  const fileName = baseName(clipboard.sourcePath);
+  const rawTarget = joinPath(targetFolderPath, fileName);
+  const finalTarget = uniquePath(project, rawTarget);
+
+  project.files[finalTarget] = content;
+
+  if (clipboard.operation === "cut") {
+    delete project.files[clipboard.sourcePath];
+    if (project.currentFile === clipboard.sourcePath) {
+      project.currentFile = finalTarget;
+    }
+    clipboard.sourcePath = null;
+    clipboard.operation = null;
+  }
+
+  ensureFolderInProject(project, targetFolderPath);
+  saveAppState();
+  renderAll();
+  openCurrentFile();
+  refreshPreview();
 }
 
 async function renameNode(project, path) {
@@ -1585,822 +1680,67 @@ function resolveProjectPath(baseFilePath, relativePath) {
   return parts.join("/");
 }
 
-function refreshPreview() {
-  const project = activeProject();
-  const htmlPath = project.activePreviewFiles?.html || `${project.root}/index.html`;
-  const cssPath = project.activePreviewFiles?.css || `${project.root}/style.css`;
-  const jsPath = project.activePreviewFiles?.js || `${project.root}/app.js`;
+// TEXT EDITOR TOOLBAR HANDLERS
+tbSelectAll.addEventListener("click", () => {
+  editor.focus();
+  editor.select();
+});
 
-  const htmlCode = project.files[htmlPath] || "";
-  const cssCode = project.files[cssPath] || "";
-  const jsCode = project.files[jsPath] || "";
-
-  let processedHTML = htmlCode;
-
-  try {
-    const doc = new DOMParser().parseFromString(`<div id="root">${htmlCode}</div>`, "text/html");
-    const root = doc.getElementById("root");
-    if (root) {
-      root.querySelectorAll("img").forEach((el) => {
-        const src = el.getAttribute("src");
-        if (!src) return;
-        const resolved = resolveProjectPath(htmlPath, src);
-        if (project.files[resolved] !== undefined) {
-          el.setAttribute("src", project.files[resolved]);
-        } else if (project.files[normalizePath(src)] !== undefined) {
-          el.setAttribute("src", project.files[normalizePath(src)]);
-        }
-      });
-      processedHTML = root.innerHTML;
-    }
-  } catch {}
-
-  preview.srcdoc = `<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>${cssCode}</style>
-</head>
-<body>
-${processedHTML}
-<script>
-try {
-${jsCode}
-} catch (e) {
-  document.body.insertAdjacentHTML("beforeend", "<pre style='color:red;white-space:pre-wrap;padding:12px;'>" + e + "</pre>");
-}
-<\/script>
-</body>
-</html>`;
-}
-
-function openDialogShell() {
-  dialogRoot.innerHTML = "";
-  dialogRoot.classList.add("open");
-}
-
-function closeDialog() {
-  dialogRoot.classList.remove("open");
-  dialogRoot.innerHTML = "";
-}
-
-function showInputDialog({ title, message, placeholder = "", value = "", okText = "OK" }) {
-  return new Promise((resolve) => {
-    openDialogShell();
-
-    const card = document.createElement("div");
-    card.className = "dialog-card";
-
-    const h = document.createElement("div");
-    h.className = "dialog-title";
-    h.textContent = title;
-
-    const p = document.createElement("div");
-    p.className = "dialog-message";
-    p.textContent = message;
-
-    const input = document.createElement("input");
-    input.className = "dialog-input";
-    input.type = "text";
-    input.placeholder = placeholder;
-    input.value = value;
-
-    const actions = document.createElement("div");
-    actions.className = "dialog-actions";
-
-    const cancel = document.createElement("button");
-    cancel.className = "dialog-btn secondary";
-    cancel.type = "button";
-    cancel.textContent = "Cancel";
-
-    const ok = document.createElement("button");
-    ok.className = "dialog-btn primary";
-    ok.type = "button";
-    ok.textContent = okText;
-
-    const finish = (result) => {
-      closeDialog();
-      resolve(result);
-    };
-
-    cancel.addEventListener("click", () => finish(null));
-    ok.addEventListener("click", () => {
-      const val = input.value.trim();
-      finish(val || null);
-    });
-
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") ok.click();
-      if (e.key === "Escape") cancel.click();
-    });
-
-    actions.appendChild(cancel);
-    actions.appendChild(ok);
-    card.appendChild(h);
-    card.appendChild(p);
-    card.appendChild(input);
-    card.appendChild(actions);
-    dialogRoot.appendChild(card);
-
-    setTimeout(() => input.focus(), 0);
-  });
-}
-
-function showConfirmDialog({ title, message, okText = "OK", danger = false }) {
-  return new Promise((resolve) => {
-    openDialogShell();
-
-    const card = document.createElement("div");
-    card.className = "dialog-card";
-
-    const h = document.createElement("div");
-    h.className = "dialog-title";
-    h.textContent = title;
-
-    const p = document.createElement("div");
-    p.className = "dialog-message";
-    p.textContent = message;
-
-    const actions = document.createElement("div");
-    actions.className = "dialog-actions";
-
-    const cancel = document.createElement("button");
-    cancel.className = "dialog-btn secondary";
-    cancel.type = "button";
-    cancel.textContent = "Cancel";
-
-    const ok = document.createElement("button");
-    ok.className = `dialog-btn ${danger ? "danger" : "primary"}`;
-    ok.type = "button";
-    ok.textContent = okText;
-
-    const finish = (result) => {
-      closeDialog();
-      resolve(result);
-    };
-
-    cancel.addEventListener("click", () => finish(false));
-    ok.addEventListener("click", () => finish(true));
-
-    actions.appendChild(cancel);
-    actions.appendChild(ok);
-    card.appendChild(h);
-    card.appendChild(p);
-    card.appendChild(actions);
-    dialogRoot.appendChild(card);
-  });
-}
-
-async function createProjectFromTop() {
-  const name = await showInputDialog({
-    title: "New project",
-    message: "Create a new workspace. Old projects will stay saved.",
-    placeholder: "Project name",
-    value: "MyProject"
-  });
-
-  if (!name) return;
-  createProject(name);
-}
-
-async function createFolderIn(project, folderPath) {
-  const name = await showInputDialog({
-    title: "Create folder",
-    message: `Folder will be created inside: ${folderPath}`,
-    placeholder: "e.g. images or ui/components"
-  });
-
-  if (!name) return;
-
-  const full = uniquePath(project, joinPath(folderPath, name));
-  ensureFolderInProject(project, full);
-  saveAppState();
-  renderAll();
-}
-
-async function createFileIn(project, folderPath) {
-  const name = await showInputDialog({
-    title: "Create file",
-    message: `File will be created inside: ${folderPath}`,
-    placeholder: "e.g. page.html or card.js",
-    value: ""
-  });
-
-  if (!name) return;
-
-  const full = uniquePath(project, joinPath(folderPath, name));
-  project.files[full] = "";
-
-  let dir = parentPath(full);
-  while (dir) {
-    if (!project.folders.includes(dir)) project.folders.push(dir);
-    dir = parentPath(dir);
-  }
-
-  saveAppState();
-  renderAll();
-  openFile(full);
-}
-
-async function renameNode(project, path) {
-  const oldPath = normalizePath(path);
-
-  const newName = await showInputDialog({
-    title: "Rename",
-    message: "Enter the new name or path.",
-    placeholder: oldPath,
-    value: baseName(oldPath)
-  });
-
-  if (!newName) return;
-
-  const target = joinPath(parentPath(oldPath), newName);
-
-  if (project.files[oldPath] !== undefined) {
-    const finalTarget = uniquePath(project, target);
-    const content = project.files[oldPath];
-    delete project.files[oldPath];
-    project.files[finalTarget] = content;
-
-    if (project.currentFile === oldPath) project.currentFile = finalTarget;
-    if (project.activePreviewFiles.html === oldPath) project.activePreviewFiles.html = finalTarget;
-    if (project.activePreviewFiles.css === oldPath) project.activePreviewFiles.css = finalTarget;
-    if (project.activePreviewFiles.js === oldPath) project.activePreviewFiles.js = finalTarget;
-  } else if (project.folders.includes(oldPath)) {
-    const finalTarget = normalizePath(target);
-    const oldPrefix = `${oldPath}/`;
-    const newPrefix = `${finalTarget}/`;
-
-    project.folders = project.folders.map(f => {
-      if (f === oldPath) return finalTarget;
-      if (f.startsWith(oldPrefix)) return `${newPrefix}${f.slice(oldPrefix.length)}`;
-      return f;
-    });
-
-    const moved = {};
-    for (const [k, v] of Object.entries(project.files)) {
-      if (k === oldPath) moved[finalTarget] = v;
-      else if (k.startsWith(oldPrefix)) moved[`${newPrefix}${k.slice(oldPrefix.length)}`] = v;
-      else moved[k] = v;
-    }
-    project.files = moved;
-
-    project.expandedFolders = project.expandedFolders.map(f => {
-      if (f === oldPath) return finalTarget;
-      if (f.startsWith(oldPrefix)) return `${newPrefix}${f.slice(oldPrefix.length)}`;
-      return f;
-    });
-
-    if (project.currentFile === oldPath || project.currentFile.startsWith(oldPrefix)) {
-      project.currentFile = `${newPrefix}${project.currentFile.slice(oldPrefix.length)}`;
-    }
-
-    if (project.activePreviewFiles.html === oldPath || project.activePreviewFiles.html.startsWith(oldPrefix)) {
-      project.activePreviewFiles.html = `${newPrefix}${project.activePreviewFiles.html.slice(oldPrefix.length)}`;
-    }
-    if (project.activePreviewFiles.css === oldPath || project.activePreviewFiles.css.startsWith(oldPrefix)) {
-      project.activePreviewFiles.css = `${newPrefix}${project.activePreviewFiles.css.slice(oldPrefix.length)}`;
-    }
-    if (project.activePreviewFiles.js === oldPath || project.activePreviewFiles.js.startsWith(oldPrefix)) {
-      project.activePreviewFiles.js = `${newPrefix}${project.activePreviewFiles.js.slice(oldPrefix.length)}`;
-    }
-
-    if (oldPath === project.root) {
-      project.root = finalTarget;
-      project.name = finalTarget;
-    }
-  }
-
-  saveAppState();
-  renderAll();
-  openCurrentFile();
-}
-
-async function deleteNode(project, path) {
-  const sure = await showConfirmDialog({
-    title: "Delete",
-    message: `Are you sure you want to delete "${path}"?`,
-    okText: "Delete",
-    danger: true
-  });
-
-  if (!sure) return;
-
-  if (path === project.root) {
-    if (appState.projects.length > 1) {
-      appState.projects = appState.projects.filter(p => p.id !== project.id);
-      appState.activeProjectId = appState.projects[0].id;
-      saveAppState();
-      openCurrentFile();
-      return;
-    }
-
-    const reset = createDefaultProject(project.root);
-    project.id = reset.id;
-    project.name = reset.name;
-    project.root = reset.root;
-    project.folders = reset.folders;
-    project.files = reset.files;
-    project.currentFile = reset.currentFile;
-    project.expandedFolders = reset.expandedFolders;
-    project.activePreviewFiles = reset.activePreviewFiles;
-  } else if (project.folders.includes(path)) {
-    const prefix = `${path}/`;
-    for (const k of Object.keys(project.files)) {
-      if (k === path || k.startsWith(prefix)) delete project.files[k];
-    }
-    project.folders = project.folders.filter(f => f !== path && !f.startsWith(prefix));
-    project.expandedFolders = project.expandedFolders.filter(f => f !== path && !f.startsWith(prefix));
-
-    if (project.currentFile === path || project.currentFile.startsWith(prefix)) {
-      project.currentFile = `${project.root}/index.html`;
-    }
-    if (project.activePreviewFiles.html === path || project.activePreviewFiles.html.startsWith(prefix)) {
-      project.activePreviewFiles.html = `${project.root}/index.html`;
-    }
-    if (project.activePreviewFiles.css === path || project.activePreviewFiles.css.startsWith(prefix)) {
-      project.activePreviewFiles.css = `${project.root}/style.css`;
-    }
-    if (project.activePreviewFiles.js === path || project.activePreviewFiles.js.startsWith(prefix)) {
-      project.activePreviewFiles.js = `${project.root}/app.js`;
-    }
+tbCopy.addEventListener("click", () => {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  
+  // Agar kuch select ho toh woh copy karein, warna saara code copy karein
+  if (start !== end) {
+    editorClipboardText = editor.value.substring(start, end);
   } else {
-    delete project.files[path];
-    if (project.currentFile === path) project.currentFile = `${project.root}/index.html`;
-    if (project.activePreviewFiles.html === path) project.activePreviewFiles.html = `${project.root}/index.html`;
-    if (project.activePreviewFiles.css === path) project.activePreviewFiles.css = `${project.root}/style.css`;
-    if (project.activePreviewFiles.js === path) project.activePreviewFiles.js = `${project.root}/app.js`;
+    editorClipboardText = editor.value;
   }
-
-  saveAppState();
-  renderAll();
-  openCurrentFile();
-}
-
-async function importFilesTo(project, folderPath) {
-  ensureFolderInProject(project, folderPath);
-  saveAppState();
-
-  fileInput.value = "";
-  fileInput.click();
-
-  fileInput.onchange = async () => {
-    const files = Array.from(fileInput.files || []);
-    if (!files.length) return;
-
-    for (const file of files) {
-      const safeName = file.name.replace(/\s+/g, "_");
-      const path = uniquePath(project, joinPath(folderPath, safeName));
-      const content = await readFileSmart(file);
-      project.files[path] = content;
-
-      let dir = parentPath(path);
-      while (dir) {
-        if (!project.folders.includes(dir)) project.folders.push(dir);
-        dir = parentPath(dir);
-      }
-    }
-
-    saveAppState();
-    renderAll();
-    refreshPreview();
-  };
-}
-
-function readFileSmart(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error);
-
-    const textLike =
-      file.type.startsWith("text/") ||
-      file.type === "application/json" ||
-      /\.(txt|md|html?|css|js|json|xml|svg|csv|ts|tsx|jsx|scss|sass|less)$/i.test(file.name);
-
-    if (file.type.startsWith("image/")) {
-      reader.readAsDataURL(file);
-    } else if (textLike) {
-      reader.readAsText(file);
-    } else {
-      reader.readAsDataURL(file);
-    }
-  });
-}
-
-function refreshPreview() {
-  const project = activeProject();
-  const htmlPath = project.activePreviewFiles?.html || `${project.root}/index.html`;
-  const cssPath = project.activePreviewFiles?.css || `${project.root}/style.css`;
-  const jsPath = project.activePreviewFiles?.js || `${project.root}/app.js`;
-
-  const htmlCode = project.files[htmlPath] || "";
-  const cssCode = project.files[cssPath] || "";
-  const jsCode = project.files[jsPath] || "";
-
-  let processedHTML = htmlCode;
-
-  try {
-    const doc = new DOMParser().parseFromString(`<div id="root">${htmlCode}</div>`, "text/html");
-    const root = doc.getElementById("root");
-    if (root) {
-      root.querySelectorAll("img").forEach((el) => {
-        const src = el.getAttribute("src");
-        if (!src) return;
-        const resolved = resolveProjectPath(htmlPath, src);
-        if (project.files[resolved] !== undefined) {
-          el.setAttribute("src", project.files[resolved]);
-        } else if (project.files[normalizePath(src)] !== undefined) {
-          el.setAttribute("src", project.files[normalizePath(src)]);
-        }
-      });
-      processedHTML = root.innerHTML;
-    }
-  } catch {}
-
-  preview.srcdoc = `<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>${cssCode}</style>
-</head>
-<body>
-${processedHTML}
-<script>
-try {
-${jsCode}
-} catch (e) {
-  document.body.insertAdjacentHTML("beforeend", "<pre style='color:red;white-space:pre-wrap;padding:12px;'>" + e + "</pre>");
-}
-<\/script>
-</body>
-</html>`;
-}
-
-function resolveProjectPath(baseFilePath, relativePath) {
-  const baseDir = parentPath(baseFilePath) || activeProject().root;
-  const combined = `${baseDir}/${relativePath}`;
-  const parts = [];
-
-  for (const part of combined.split("/")) {
-    if (!part || part === ".") continue;
-    if (part === "..") {
-      if (parts.length) parts.pop();
-      continue;
-    }
-    parts.push(part);
-  }
-
-  return parts.join("/");
-}
-
-async function createProjectFromTop() {
-  const name = await showInputDialog({
-    title: "New project",
-    message: "Create a new workspace. Old projects will stay saved.",
-    placeholder: "Project name",
-    value: "MyProject"
-  });
-
-  if (!name) return;
-  createProject(name);
-}
-
-async function createFolderIn(project, folderPath) {
-  const name = await showInputDialog({
-    title: "Create folder",
-    message: `Folder will be created inside: ${folderPath}`,
-    placeholder: "e.g. images or ui/components"
-  });
-
-  if (!name) return;
-
-  const full = uniquePath(project, normalizePath(`${folderPath}/${name}`));
-  ensureFolderInProject(project, full);
-  saveAppState();
-  renderAll();
-}
-
-async function createFileIn(project, folderPath) {
-  const name = await showInputDialog({
-    title: "Create file",
-    message: `File will be created inside: ${folderPath}`,
-    placeholder: "e.g. page.html or card.js",
-    value: ""
-  });
-
-  if (!name) return;
-
-  const full = uniquePath(project, normalizePath(`${folderPath}/${name}`));
-  project.files[full] = "";
-
-  let dir = parentPath(full);
-  while (dir) {
-    if (!project.folders.includes(dir)) project.folders.push(dir);
-    dir = parentPath(dir);
-  }
-
-  saveAppState();
-  renderAll();
-  openFile(full);
-}
-
-function openDialogShell() {
-  dialogRoot.innerHTML = "";
-  dialogRoot.classList.add("open");
-}
-
-function closeDialog() {
-  dialogRoot.classList.remove("open");
-  dialogRoot.innerHTML = "";
-}
-
-function showInputDialog({ title, message, placeholder = "", value = "", okText = "OK" }) {
-  return new Promise((resolve) => {
-    openDialogShell();
-
-    const card = document.createElement("div");
-    card.className = "dialog-card";
-
-    const h = document.createElement("div");
-    h.className = "dialog-title";
-    h.textContent = title;
-
-    const p = document.createElement("div");
-    p.className = "dialog-message";
-    p.textContent = message;
-
-    const input = document.createElement("input");
-    input.className = "dialog-input";
-    input.type = "text";
-    input.placeholder = placeholder;
-    input.value = value;
-
-    const actions = document.createElement("div");
-    actions.className = "dialog-actions";
-
-    const cancel = document.createElement("button");
-    cancel.className = "dialog-btn secondary";
-    cancel.type = "button";
-    cancel.textContent = "Cancel";
-
-    const ok = document.createElement("button");
-    ok.className = "dialog-btn primary";
-    ok.type = "button";
-    ok.textContent = okText;
-
-    const finish = (result) => {
-      closeDialog();
-      resolve(result);
-    };
-
-    cancel.addEventListener("click", () => finish(null));
-    ok.addEventListener("click", () => {
-      const val = input.value.trim();
-      finish(val || null);
-    });
-
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") ok.click();
-      if (e.key === "Escape") cancel.click();
-    });
-
-    actions.appendChild(cancel);
-    actions.appendChild(ok);
-    card.appendChild(h);
-    card.appendChild(p);
-    card.appendChild(input);
-    card.appendChild(actions);
-    dialogRoot.appendChild(card);
-
-    setTimeout(() => input.focus(), 0);
-  });
-}
-
-function showConfirmDialog({ title, message, okText = "OK", danger = false }) {
-  return new Promise((resolve) => {
-    openDialogShell();
-
-    const card = document.createElement("div");
-    card.className = "dialog-card";
-
-    const h = document.createElement("div");
-    h.className = "dialog-title";
-    h.textContent = title;
-
-    const p = document.createElement("div");
-    p.className = "dialog-message";
-    p.textContent = message;
-
-    const actions = document.createElement("div");
-    actions.className = "dialog-actions";
-
-    const cancel = document.createElement("button");
-    cancel.className = "dialog-btn secondary";
-    cancel.type = "button";
-    cancel.textContent = "Cancel";
-
-    const ok = document.createElement("button");
-    ok.className = `dialog-btn ${danger ? "danger" : "primary"}`;
-    ok.type = "button";
-    ok.textContent = okText;
-
-    const finish = (result) => {
-      closeDialog();
-      resolve(result);
-    };
-
-    cancel.addEventListener("click", () => finish(false));
-    ok.addEventListener("click", () => finish(true));
-
-    actions.appendChild(cancel);
-    actions.appendChild(ok);
-    card.appendChild(h);
-    card.appendChild(p);
-    card.appendChild(actions);
-    dialogRoot.appendChild(card);
-  });
-}
-
-async function renameNode(project, path) {
-  const oldPath = normalizePath(path);
-
-  const newName = await showInputDialog({
-    title: "Rename",
-    message: "Enter the new name or path.",
-    placeholder: oldPath,
-    value: baseName(oldPath)
-  });
-
-  if (!newName) return;
-
-  const target = normalizePath(joinPath(parentPath(oldPath), newName));
-
-  if (project.files[oldPath] !== undefined) {
-    const finalTarget = uniquePath(project, target);
-    const content = project.files[oldPath];
-    delete project.files[oldPath];
-    project.files[finalTarget] = content;
-
-    if (project.currentFile === oldPath) project.currentFile = finalTarget;
-    if (project.activePreviewFiles.html === oldPath) project.activePreviewFiles.html = finalTarget;
-    if (project.activePreviewFiles.css === oldPath) project.activePreviewFiles.css = finalTarget;
-    if (project.activePreviewFiles.js === oldPath) project.activePreviewFiles.js = finalTarget;
-  } else if (project.folders.includes(oldPath)) {
-    const finalTarget = normalizePath(target);
-    const oldPrefix = `${oldPath}/`;
-    const newPrefix = `${finalTarget}/`;
-
-    project.folders = project.folders.map(f => {
-      if (f === oldPath) return finalTarget;
-      if (f.startsWith(oldPrefix)) return `${newPrefix}${f.slice(oldPrefix.length)}`;
-      return f;
-    });
-
-    const moved = {};
-    for (const [k, v] of Object.entries(project.files)) {
-      if (k === oldPath) moved[finalTarget] = v;
-      else if (k.startsWith(oldPrefix)) moved[`${newPrefix}${k.slice(oldPrefix.length)}`] = v;
-      else moved[k] = v;
-    }
-    project.files = moved;
-
-    project.expandedFolders = project.expandedFolders.map(f => {
-      if (f === oldPath) return finalTarget;
-      if (f.startsWith(oldPrefix)) return `${newPrefix}${f.slice(oldPrefix.length)}`;
-      return f;
-    });
-
-    if (project.currentFile === oldPath || project.currentFile.startsWith(oldPrefix)) {
-      project.currentFile = `${newPrefix}${project.currentFile.slice(oldPrefix.length)}`;
-    }
-
-    if (project.activePreviewFiles.html === oldPath || project.activePreviewFiles.html.startsWith(oldPrefix)) {
-      project.activePreviewFiles.html = `${newPrefix}${project.activePreviewFiles.html.slice(oldPrefix.length)}`;
-    }
-    if (project.activePreviewFiles.css === oldPath || project.activePreviewFiles.css.startsWith(oldPrefix)) {
-      project.activePreviewFiles.css = `${newPrefix}${project.activePreviewFiles.css.slice(oldPrefix.length)}`;
-    }
-    if (project.activePreviewFiles.js === oldPath || project.activePreviewFiles.js.startsWith(oldPrefix)) {
-      project.activePreviewFiles.js = `${newPrefix}${project.activePreviewFiles.js.slice(oldPrefix.length)}`;
-    }
-
-    if (oldPath === project.root) {
-      project.root = finalTarget;
-      project.name = finalTarget;
-
-      renderProjectList();
-    }
-  }
-
-  saveAppState();
-
-  renderProjectList();
-  renderSidebarTree();
-
-  openCurrentFile();
-  refreshPreview();
-}
-
-async function deleteNode(project, path) {
-  const sure = await showConfirmDialog({
-    title: "Delete",
-    message: `Are you sure you want to delete "${path}"?`,
-    okText: "Delete",
-    danger: true
-  });
-
-  if (!sure) return;
-
-  if (path === project.root) {
-    if (appState.projects.length > 1) {
-      appState.projects = appState.projects.filter(p => p.id !== project.id);
-      appState.activeProjectId = appState.projects[0].id;
-      saveAppState();
-      openCurrentFile();
-      return;
-    }
-
-    const reset = createDefaultProject(project.root);
-    project.id = reset.id;
-    project.name = reset.name;
-    project.root = reset.root;
-    project.folders = reset.folders;
-    project.files = reset.files;
-    project.currentFile = reset.currentFile;
-    project.expandedFolders = reset.expandedFolders;
-    project.activePreviewFiles = reset.activePreviewFiles;
-  } else if (project.folders.includes(path)) {
-    const prefix = `${path}/`;
-    for (const k of Object.keys(project.files)) {
-      if (k === path || k.startsWith(prefix)) delete project.files[k];
-    }
-    project.folders = project.folders.filter(f => f !== path && !f.startsWith(prefix));
-    project.expandedFolders = project.expandedFolders.filter(f => f !== path && !f.startsWith(prefix));
-
-    if (project.currentFile === path || project.currentFile.startsWith(prefix)) {
-      project.currentFile = `${project.root}/index.html`;
-    }
-    if (project.activePreviewFiles.html === path || project.activePreviewFiles.html.startsWith(prefix)) {
-      project.activePreviewFiles.html = `${project.root}/index.html`;
-    }
-    if (project.activePreviewFiles.css === path || project.activePreviewFiles.css.startsWith(prefix)) {
-      project.activePreviewFiles.css = `${project.root}/style.css`;
-    }
-    if (project.activePreviewFiles.js === path || project.activePreviewFiles.js.startsWith(prefix)) {
-      project.activePreviewFiles.js = `${project.root}/app.js`;
-    }
+  
+  // Try writing to native clipboard for better user experience
+  navigator.clipboard?.writeText(editorClipboardText).catch(() => {});
+  editor.focus();
+});
+
+tbCut.addEventListener("click", () => {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  const oldVal = editor.value;
+  
+  if (start !== end) {
+    editorClipboardText = oldVal.substring(start, end);
+    editor.value = oldVal.substring(0, start) + oldVal.substring(end);
+    editor.selectionStart = editor.selectionEnd = start;
   } else {
-    delete project.files[path];
-    if (project.currentFile === path) project.currentFile = `${project.root}/index.html`;
-    if (project.activePreviewFiles.html === path) project.activePreviewFiles.html = `${project.root}/index.html`;
-    if (project.activePreviewFiles.css === path) project.activePreviewFiles.css = `${project.root}/style.css`;
-    if (project.activePreviewFiles.js === path) project.activePreviewFiles.js = `${project.root}/app.js`;
+    editorClipboardText = oldVal;
+    editor.value = "";
   }
+  
+  navigator.clipboard?.writeText(editorClipboardText).catch(() => {});
+  updateCurrentFileContent();
+  editor.focus();
+});
 
-  saveAppState();
-  renderAll();
-  openCurrentFile();
-}
+tbPaste.addEventListener("click", async () => {
+  // Try fetching modern async clipboard fallback first
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text) editorClipboardText = text;
+  } catch(e) {}
 
-function showFilePicker() {
-  return new Promise((resolve) => {
-    fileInput.value = "";
-    fileInput.onchange = () => {
-      resolve(Array.from(fileInput.files || []));
-    };
-    fileInput.click();
-  });
-}
-
-async function importFilesTo(project, folderPath) {
-  ensureFolderInProject(project, folderPath);
-  saveAppState();
-
-  const files = await showFilePicker();
-  if (!files.length) return;
-
-  for (const file of files) {
-    const safeName = file.name.replace(/\s+/g, "_");
-    const path = uniquePath(project, normalizePath(`${folderPath}/${safeName}`));
-    const content = await readFileSmart(file);
-    project.files[path] = content;
-
-    let dir = parentPath(path);
-    while (dir) {
-      if (!project.folders.includes(dir)) project.folders.push(dir);
-      dir = parentPath(dir);
-    }
-  }
-
-  saveAppState();
-  renderAll();
-  refreshPreview();
-}
-
-function newProjectFromButton() {
-  createProjectFromTop();
-}
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  const oldVal = editor.value;
+  
+  editor.value = oldVal.substring(0, start) + editorClipboardText + oldVal.substring(end);
+  
+  // Focus positioning layout setup
+  const nextPos = start + editorClipboardText.length;
+  editor.selectionStart = editor.selectionEnd = nextPos;
+  
+  updateCurrentFileContent();
+  editor.focus();
+});
 
 menuBtn.addEventListener("click", toggleSidebar);
 backdrop.addEventListener("click", closeSidebar);
@@ -2409,6 +1749,7 @@ editor.addEventListener("input", updateCurrentFileContent);
 dialogRoot.addEventListener("click", (e) => {
   if (e.target === dialogRoot) closeDialog();
 });
+
 tree.addEventListener("click", (e) => {
   if (e.target === tree) {
     const project = activeProject();
@@ -2417,6 +1758,7 @@ tree.addEventListener("click", (e) => {
     renderSidebarTree();
   }
 });
+
 window.addEventListener("beforeunload", saveAppState);
 
 function init() {
@@ -2436,11 +1778,9 @@ function init() {
 init();
 
 document.addEventListener("click", () => {
-
   document.querySelectorAll(".context-menu").forEach(menu => {
     menu.style.display = "none";
   });
-
 });
 </script>
 </body>
