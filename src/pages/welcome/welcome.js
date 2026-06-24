@@ -53,92 +53,60 @@ function createWelcomeContent() {
 			</header>
 
 			{/* Get Started Section */}
-			<section className="welcome-section">
-				<h2 className="section-label">GET STARTED</h2>
-				<div className="action-list">
-				    <ActionRow
-	                    icon="html5"
-	                    label="Live HTML"
-	                    onClick={() => {
-		                window.location.href = "live-editor.html";
-	                 }}
-                    />
-					<ActionRow
-						icon="add"
-						label={strings["new file"]}
-						shortcut={kb("newFile")}
-						onClick={() => acode.exec("new-file")}
-					/>
-					<ActionRow
-						icon="document-text-outline"
-						label={strings["open file"]}
-						shortcut={kb("openFile")}
-						onClick={() => acode.exec("open-file")}
-					/>
-					<ActionRow
-						icon="folder_open"
-						label={strings["open folder"]}
-						shortcut={kb("openFolder")}
-						onClick={() => acode.exec("open-folder")}
-					/>
-					<ActionRow
-						icon="terminal"
-						label={strings.terminal}
-						shortcut={kb("openTerminal")}
-						onClick={() => acode.exec("new-terminal")}
-					/>
-					<ActionRow
-						icon="historyrestore"
-						label={strings.recent}
-						onClick={() => acode.exec("recent")}
-					/>
-					<ActionRow
-						icon="tune"
-						label={strings["command palette"]}
-						shortcut={kb("openCommandPalette")}
-						onClick={() => acode.exec("command-palette")}
-					/>
-				</div>
-			</section>
+<section className="welcome-section">
+	<h2 className="section-label">GET STARTED</h2>
 
-			{/* Configure Section */}
-			<section className="welcome-section">
-				<h2 className="section-label">CONFIGURE</h2>
-				<div className="action-list">
-					<ActionRow
-						icon="settings"
-						label={strings.settings}
-						onClick={() => acode.exec("open", "settings")}
-					/>
-					<ActionRow
-						icon="color_lenspalette"
-						label={strings["change theme"]}
-						onClick={() => acode.exec("change-app-theme")}
-					/>
-					<ActionRow
-						icon="extension"
-						label={strings.explore + " " + strings.plugins}
-						onClick={() => acode.exec("open", "plugins")}
-					/>
-				</div>
-			</section>
+	<div className="action-list">
+		<ActionRow
+			icon="html5"
+			label="Live HTML"
+			onClick={() => {
+				window.location.href = "live-editor.html";
+			}}
+		/>
 
-			{/* Learn Section */}
-			<section className="welcome-section">
-				<h2 className="section-label">LEARN</h2>
-				<div className="action-list">
-					<ActionRow
-						icon="help"
-						label={strings.help}
-						onClick={() => acode.exec("open", "help")}
-					/>
-					<ActionRow
-						icon="info_outline"
-						label={strings.about}
-						onClick={() => acode.exec("open", "about")}
-					/>
-				</div>
-			</section>
+		<ActionRow
+			icon="add"
+			label={strings["new file"]}
+			shortcut={kb("newFile")}
+			onClick={() => acode.exec("new-file")}
+		/>
+
+		<ActionRow
+			icon="document-text-outline"
+			label={strings["open file"]}
+			shortcut={kb("openFile")}
+			onClick={() => acode.exec("open-file")}
+		/>
+
+		<ActionRow
+			icon="folder_open"
+			label={strings["open folder"]}
+			shortcut={kb("openFolder")}
+			onClick={() => acode.exec("open-folder")}
+		/>
+
+		<ActionRow
+			icon="terminal"
+			label={strings.terminal}
+			shortcut={kb("openTerminal")}
+			onClick={() => acode.exec("new-terminal")}
+		/>
+
+		<ActionRow
+			icon="historyrestore"
+			label={strings.recent}
+			onClick={() => acode.exec("recent")}
+		/>
+
+		<ActionRow
+			icon="tune"
+			label={strings["command palette"]}
+			shortcut={kb("openCommandPalette")}
+			onClick={() => acode.exec("command-palette")}
+		/>
+	</div>
+</section>
 
 			{/* Links Section */}
 			<section className="welcome-section welcome-links">
