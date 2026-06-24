@@ -56,6 +56,13 @@ function createWelcomeContent() {
 			<section className="welcome-section">
 				<h2 className="section-label">GET STARTED</h2>
 				<div className="action-list">
+				    <ActionRow
+	                    icon="html5"
+	                    label="Live HTML"
+	                    onClick={() => {
+		                window.location.href = "live-editor.html", "_self";
+	                 }}
+                    />
 					<ActionRow
 						icon="add"
 						label={strings["new file"]}
