@@ -60,7 +60,7 @@ function createWelcomeContent() {
 	                    icon="html5"
 	                    label="Live HTML"
 	                    onClick={() => {
-		                window.location.href = "live-editor.html", "_self";
+		                window.location.href = "live-editor.html";
 	                 }}
                     />
 					<ActionRow
