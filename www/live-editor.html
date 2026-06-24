@@ -1,311 +1,904 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Live Editor</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Live Project Editor</title>
 
 <style>
-
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-body{
-  height:100vh;
-  background:#111;
-  font-family:sans-serif;
-  overflow:hidden;
+:root{
+  --bg: #111;
+  --panel: #181818;
+  --panel2: #1f1f1f;
+  --line: #333;
+  --text: #eaeaea;
+  --muted: #aaa;
+  --accent: #00ff88;
+  --btn: #2f2f2f;
+  --btn2: #3b3b3b;
 }
 
-#main{
-  display:flex;
-  height:100vh;
+body {
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: sans-serif;
 }
 
-#sidebar{
-  width:220px;
-  background:#181818;
-  border-right:1px solid #333;
-  overflow:auto;
-  color:white;
-  padding:10px;
+#app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
 }
 
-#sidebar h3{
-  margin-bottom:10px;
+#sidebar {
+  width: 270px;
+  min-width: 220px;
+  max-width: 45vw;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.file{
-  padding:10px;
-  border-radius:6px;
-  margin-bottom:8px;
-  background:#222;
-  cursor:pointer;
+#sidebar-header {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
 }
 
-.file:hover{
-  background:#333;
+#sidebar-header h2 {
+  font-size: 16px;
+  margin-bottom: 10px;
 }
 
-#editor-area{
-  flex:1;
-  display:flex;
-  flex-direction:column;
+#sidebar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-#top{
-  height:30%;
-  background:#1b1b1b;
-  display:flex;
-  flex-direction:column;
+button {
+  border: 0;
+  background: var(--btn);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
 }
 
-#language{
-  height:45px;
-  border:none;
-  outline:none;
-  background:#222;
-  color:white;
-  padding:10px;
-  font-size:16px;
+button:active {
+  background: var(--btn2);
 }
 
-textarea{
-  flex:1;
-  border:none;
-  outline:none;
-  resize:none;
-  background:#111;
-  color:#00ff88;
-  padding:10px;
-  font-size:15px;
+#tree {
+  overflow: auto;
+  flex: 1;
+  padding: 10px;
 }
 
-iframe{
-  flex:1;
-  border:none;
-  background:white;
+.node {
+  user-select: none;
+  margin-bottom: 2px;
 }
 
-#buttons{
-  display:flex;
-  gap:5px;
-  padding:5px;
-  background:#222;
+.node-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
-button{
-  padding:8px 12px;
-  border:none;
-  background:#444;
-  color:white;
-  border-radius:5px;
+.node-row:hover {
+  background: #242424;
 }
 
-button:active{
-  background:#666;
+.node-row.active {
+  background: #2b2b2b;
+  outline: 1px solid #444;
 }
 
+.node-children {
+  margin-left: 16px;
+  padding-left: 8px;
+  border-left: 1px dashed #303030;
+}
+
+.twisty {
+  width: 14px;
+  display: inline-block;
+  color: var(--muted);
+}
+
+.icon {
+  width: 18px;
+  display: inline-block;
+  text-align: center;
+  color: var(--accent);
+}
+
+.name {
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#topbar {
+  padding: 10px;
+  background: var(--panel2);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+#current-file {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 45%;
+}
+
+#editor-wrap {
+  height: 30%;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--line);
+}
+
+#editor {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: #101010;
+  color: var(--accent);
+  padding: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  font-family: monospace;
+}
+
+#image-preview-wrap {
+  flex: 1;
+  display: none;
+  background: #101010;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 10px;
+}
+
+#image-preview {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+#output {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: white;
+}
+
+#status {
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  background: #141414;
+}
+
+input[type="file"]{
+  display: none;
+}
 </style>
 </head>
-
 <body>
 
-<div id="main">
+<div id="app">
+  <aside id="sidebar">
+    <div id="sidebar-header">
+      <h2>Project</h2>
+      <div id="sidebar-actions">
+        <button id="newFileBtn">New File</button>
+        <button id="newFolderBtn">New Folder</button>
+        <button id="renameBtn">Rename</button>
+        <button id="deleteBtn">Delete</button>
+        <button id="importImageBtn">Import Image</button>
+        <button id="exportBtn">Export JSON</button>
+      </div>
+    </div>
+    <div id="tree"></div>
+  </aside>
 
-<div id="sidebar">
+  <section id="main">
+    <div id="topbar">
+      <button id="htmlBtn">HTML</button>
+      <button id="cssBtn">CSS</button>
+      <button id="jsBtn">JavaScript</button>
+      <span id="current-file">No file selected</span>
+    </div>
 
-<h3>Project</h3>
+    <div id="editor-wrap">
+      <textarea id="editor" spellcheck="false"></textarea>
+      <div id="image-preview-wrap">
+        <img id="image-preview" alt="preview" />
+      </div>
+    </div>
 
-<div class="file" onclick="switchFile('html')">
-index.html
+    <iframe id="output"></iframe>
+    <div id="status">Ready</div>
+  </section>
 </div>
 
-<div class="file" onclick="switchFile('css')">
-style.css
-</div>
-
-<div class="file" onclick="switchFile('js')">
-script.js
-</div>
-
-</div>
-
-<div id="editor-area">
-
-<div id="top">
-
-<div id="buttons">
-
-<select id="language">
-  <option value="html">HTML</option>
-  <option value="css">CSS</option>
-  <option value="js">JavaScript</option>
-</select>
-
-<button onclick="downloadProject()">
-Download
-</button>
-
-</div>
-
-<textarea id="editor"></textarea>
-
-</div>
-
-<iframe id="output"></iframe>
-
-</div>
-
-</div>
+<input id="imageInput" type="file" accept="image/*" multiple />
 
 <script>
+const STORAGE_KEY = "liveProjectV2";
 
+const treeEl = document.getElementById("tree");
 const editor = document.getElementById("editor");
 const output = document.getElementById("output");
-const language = document.getElementById("language");
+const statusEl = document.getElementById("status");
+const currentFileEl = document.getElementById("current-file");
+const imageWrap = document.getElementById("image-preview-wrap");
+const imagePreview = document.getElementById("image-preview");
+const imageInput = document.getElementById("imageInput");
 
-let htmlCode =
-localStorage.getItem("htmlCode")
-|| `<h1>Hello</h1>`;
+const newFileBtn = document.getElementById("newFileBtn");
+const newFolderBtn = document.getElementById("newFolderBtn");
+const renameBtn = document.getElementById("renameBtn");
+const deleteBtn = document.getElementById("deleteBtn");
+const importImageBtn = document.getElementById("importImageBtn");
+const exportBtn = document.getElementById("exportBtn");
 
-let cssCode =
-localStorage.getItem("cssCode")
-|| `body{
-background:black;
-color:lime;
-font-family:sans-serif;
-}`;
+const htmlBtn = document.getElementById("htmlBtn");
+const cssBtn = document.getElementById("cssBtn");
+const jsBtn = document.getElementById("jsBtn");
 
-let jsCode =
-localStorage.getItem("jsCode")
-|| `console.log("Hello")`;
+let state = loadState();
 
-function refreshOutput(){
+let currentFile = state.currentFile || "index.html";
+let openFolders = new Set(state.openFolders || [""]);
+let activePreviewFiles = state.activePreviewFiles || {
+  html: "index.html",
+  css: "style.css",
+  js: "app.js"
+};
 
-output.srcdoc = `
+function defaultProject() {
+  return {
+    folders: ["css", "js", "images"],
+    files: {
+      "index.html": `<h1>Hello</h1>\n<p>Live project editor</p>\n<img src="images/logo.png" alt="logo" style="max-width:200px;">`,
+      "style.css": `body{\n  background:black;\n  color:lime;\n  font-family:sans-serif;\n}\n`,
+      "app.js": `console.log("Hello");\n`
+    }
+  };
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultProjectWrapper();
+    const parsed = JSON.parse(raw);
+    return normalizeState(parsed);
+  } catch (e) {
+    return defaultProjectWrapper();
+  }
+}
+
+function defaultProjectWrapper() {
+  const d = defaultProject();
+  return {
+    folders: d.folders,
+    files: d.files,
+    currentFile: "index.html",
+    openFolders: [""],
+    activePreviewFiles: {
+      html: "index.html",
+      css: "style.css",
+      js: "app.js"
+    }
+  };
+}
+
+function normalizeState(obj) {
+  const fallback = defaultProjectWrapper();
+  const files = obj?.files && typeof obj.files === "object" ? obj.files : fallback.files;
+  const folders = Array.isArray(obj?.folders) ? obj.folders : fallback.folders;
+  const currentFile = typeof obj?.currentFile === "string" ? obj.currentFile : fallback.currentFile;
+  const openFolders = Array.isArray(obj?.openFolders) ? obj.openFolders : fallback.openFolders;
+  const activePreviewFiles = obj?.activePreviewFiles && typeof obj.activePreviewFiles === "object"
+    ? {
+        html: obj.activePreviewFiles.html || "index.html",
+        css: obj.activePreviewFiles.css || "style.css",
+        js: obj.activePreviewFiles.js || "app.js"
+      }
+    : fallback.activePreviewFiles;
+
+  return { folders, files, currentFile, openFolders, activePreviewFiles };
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    folders: state.folders,
+    files: state.files,
+    currentFile,
+    openFolders: Array.from(openFolders),
+    activePreviewFiles
+  }));
+}
+
+function setStatus(msg) {
+  statusEl.textContent = msg;
+}
+
+function normalizePath(path) {
+  return String(path || "")
+    .replace(/\\/g, "/")
+    .replace(/^\/+/, "")
+    .replace(/\/+/g, "/")
+    .replace(/\/+$/, "")
+    .trim();
+}
+
+function parentPath(path) {
+  path = normalizePath(path);
+  const idx = path.lastIndexOf("/");
+  return idx === -1 ? "" : path.slice(0, idx);
+}
+
+function baseName(path) {
+  path = normalizePath(path);
+  const idx = path.lastIndexOf("/");
+  return idx === -1 ? path : path.slice(idx + 1);
+}
+
+function extOf(path) {
+  const name = baseName(path);
+  const idx = name.lastIndexOf(".");
+  return idx === -1 ? "" : name.slice(idx + 1).toLowerCase();
+}
+
+function isImageFile(path) {
+  return ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "avif"].includes(extOf(path));
+}
+
+function isTextFile(path) {
+  return !isImageFile(path);
+}
+
+function ensureFolder(folderPath) {
+  folderPath = normalizePath(folderPath);
+  if (!folderPath) return;
+  const parts = folderPath.split("/");
+  let acc = "";
+  for (const part of parts) {
+    acc = acc ? acc + "/" + part : part;
+    if (!state.folders.includes(acc)) state.folders.push(acc);
+  }
+  saveState();
+}
+
+function createFile(filePath, content = "") {
+  filePath = normalizePath(filePath);
+  if (!filePath) return false;
+  const dir = parentPath(filePath);
+  if (dir) ensureFolder(dir);
+  state.files[filePath] = content;
+  if (!state.currentFile) currentFile = filePath;
+  saveState();
+  return true;
+}
+
+function deleteFileOrFolder(path) {
+  path = normalizePath(path);
+  if (!path) return;
+
+  const isFolder = state.folders.includes(path);
+  if (isFolder) {
+    const prefix = path + "/";
+    for (const filePath of Object.keys(state.files)) {
+      if (filePath === path || filePath.startsWith(prefix)) delete state.files[filePath];
+    }
+    state.folders = state.folders.filter(f => f !== path && !f.startsWith(prefix));
+    if (currentFile === path || currentFile.startsWith(prefix)) currentFile = "index.html";
+    activePreviewFiles.html = state.files[activePreviewFiles.html] ? activePreviewFiles.html : "index.html";
+    activePreviewFiles.css = state.files[activePreviewFiles.css] ? activePreviewFiles.css : "style.css";
+    activePreviewFiles.js = state.files[activePreviewFiles.js] ? activePreviewFiles.js : "app.js";
+    setStatus("Folder deleted");
+  } else {
+    delete state.files[path];
+    if (currentFile === path) currentFile = "index.html";
+    if (activePreviewFiles.html === path) activePreviewFiles.html = Object.keys(state.files).find(f => extOf(f) === "html") || "index.html";
+    if (activePreviewFiles.css === path) activePreviewFiles.css = Object.keys(state.files).find(f => extOf(f) === "css") || "style.css";
+    if (activePreviewFiles.js === path) activePreviewFiles.js = Object.keys(state.files).find(f => extOf(f) === "js") || "app.js";
+    setStatus("File deleted");
+  }
+  saveState();
+}
+
+function renamePath(oldPath, newPath) {
+  oldPath = normalizePath(oldPath);
+  newPath = normalizePath(newPath);
+  if (!oldPath || !newPath || oldPath === newPath) return;
+
+  if (state.files[oldPath] !== undefined) {
+    const content = state.files[oldPath];
+    delete state.files[oldPath];
+    state.files[newPath] = content;
+
+    if (currentFile === oldPath) currentFile = newPath;
+    if (activePreviewFiles.html === oldPath) activePreviewFiles.html = newPath;
+    if (activePreviewFiles.css === oldPath) activePreviewFiles.css = newPath;
+    if (activePreviewFiles.js === oldPath) activePreviewFiles.js = newPath;
+
+    const newParent = parentPath(newPath);
+    if (newParent) ensureFolder(newParent);
+    setStatus("File renamed");
+  } else if (state.folders.includes(oldPath)) {
+    const oldPrefix = oldPath + "/";
+    const newPrefix = newPath + "/";
+    state.files = Object.fromEntries(
+      Object.entries(state.files).map(([k, v]) => {
+        if (k === oldPath) return [newPath, v];
+        if (k.startsWith(oldPrefix)) return [newPrefix + k.slice(oldPrefix.length), v];
+        return [k, v];
+      })
+    );
+
+    state.folders = state.folders
+      .filter(f => f !== oldPath && !f.startsWith(oldPrefix))
+      .map(f => (f.startsWith(oldPrefix) ? newPrefix + f.slice(oldPrefix.length) : f));
+
+    state.folders.push(newPath);
+    openFolders = new Set(Array.from(openFolders).map(f => {
+      if (f === oldPath) return newPath;
+      if (f.startsWith(oldPrefix)) return newPrefix + f.slice(oldPrefix.length);
+      return f;
+    }));
+
+    if (currentFile === oldPath || currentFile.startsWith(oldPrefix)) {
+      currentFile = currentFile.replace(oldPrefix, newPrefix);
+    }
+
+    if (activePreviewFiles.html === oldPath) activePreviewFiles.html = newPath;
+    if (activePreviewFiles.css === oldPath) activePreviewFiles.css = newPath;
+    if (activePreviewFiles.js === oldPath) activePreviewFiles.js = newPath;
+
+    setStatus("Folder renamed");
+  }
+  saveState();
+}
+
+function childrenFolders(folderPath) {
+  folderPath = normalizePath(folderPath);
+  return [...new Set(state.folders)]
+    .filter(f => parentPath(f) === folderPath)
+    .sort((a, b) => baseName(a).localeCompare(baseName(b)));
+}
+
+function childrenFiles(folderPath) {
+  folderPath = normalizePath(folderPath);
+  return Object.keys(state.files)
+    .filter(f => parentPath(f) === folderPath)
+    .sort((a, b) => baseName(a).localeCompare(baseName(b)));
+}
+
+function buildTreeNode(folderPath, depth = 0) {
+  const node = document.createElement("div");
+  node.className = "node";
+
+  const row = document.createElement("div");
+  row.className = "node-row";
+
+  const isOpen = openFolders.has(folderPath);
+  const childFolders = childrenFolders(folderPath);
+  const childFiles = childrenFiles(folderPath);
+
+  const twisty = document.createElement("span");
+  twisty.className = "twisty";
+  twisty.textContent = folderPath === "" ? "▾" : (isOpen ? "▾" : "▸");
+
+  const icon = document.createElement("span");
+  icon.className = "icon";
+  icon.textContent = folderPath === "" ? "🗂" : "📁";
+
+  const name = document.createElement("span");
+  name.className = "name";
+  name.textContent = folderPath === "" ? "Project" : baseName(folderPath);
+
+  row.appendChild(twisty);
+  row.appendChild(icon);
+  row.appendChild(name);
+
+  if (folderPath === currentFile) row.classList.add("active");
+
+  row.onclick = () => {
+    if (folderPath === "") return;
+    if (openFolders.has(folderPath)) openFolders.delete(folderPath);
+    else openFolders.add(folderPath);
+    saveState();
+    renderTree();
+  };
+
+  node.appendChild(row);
+
+  if (folderPath === "" || isOpen) {
+    const children = document.createElement("div");
+    children.className = "node-children";
+
+    for (const folder of childFolders) {
+      children.appendChild(buildTreeNode(folder, depth + 1));
+    }
+
+    for (const file of childFiles) {
+      children.appendChild(buildFileNode(file));
+    }
+
+    node.appendChild(children);
+  }
+
+  return node;
+}
+
+function buildFileNode(filePath) {
+  const node = document.createElement("div");
+  node.className = "node";
+
+  const row = document.createElement("div");
+  row.className = "node-row";
+  if (filePath === currentFile) row.classList.add("active");
+
+  const twisty = document.createElement("span");
+  twisty.className = "twisty";
+  twisty.textContent = " ";
+
+  const icon = document.createElement("span");
+  icon.className = "icon";
+  icon.textContent = isImageFile(filePath) ? "🖼" : "📄";
+
+  const name = document.createElement("span");
+  name.className = "name";
+  name.textContent = baseName(filePath);
+
+  row.appendChild(twisty);
+  row.appendChild(icon);
+  row.appendChild(name);
+
+  row.onclick = () => openFile(filePath);
+
+  node.appendChild(row);
+  return node;
+}
+
+function renderTree() {
+  treeEl.innerHTML = "";
+  treeEl.appendChild(buildTreeNode(""));
+
+  const hint = document.createElement("div");
+  hint.className = "small";
+  hint.style.padding = "10px 8px 6px";
+  hint.textContent = "Use slashes in paths to make folders, e.g. images/logo.png";
+  treeEl.appendChild(hint);
+}
+
+function openFile(filePath) {
+  filePath = normalizePath(filePath);
+  if (!(filePath in state.files)) return;
+
+  currentFile = filePath;
+  const ext = extOf(filePath);
+
+  if (["html", "htm"].includes(ext)) activePreviewFiles.html = filePath;
+  if (ext === "css") activePreviewFiles.css = filePath;
+  if (ext === "js") activePreviewFiles.js = filePath;
+
+  editor.value = state.files[filePath] ?? "";
+  currentFileEl.textContent = filePath;
+
+  if (isImageFile(filePath)) {
+    editor.style.display = "none";
+    imageWrap.style.display = "flex";
+    imagePreview.src = state.files[filePath];
+    imagePreview.alt = filePath;
+  } else {
+    imageWrap.style.display = "none";
+    editor.style.display = "block";
+  }
+
+  saveState();
+  renderTree();
+  refreshOutput();
+  setStatus("Opened " + filePath);
+}
+
+function getPreviewHtml() {
+  const htmlPath = activePreviewFiles.html;
+  const cssPath = activePreviewFiles.css;
+  const jsPath = activePreviewFiles.js;
+
+  let htmlCode = state.files[htmlPath] || "";
+  let cssCode = state.files[cssPath] || "";
+  let jsCode = state.files[jsPath] || "";
+
+  htmlCode = rewriteLocalImageSources(htmlCode);
+
+  return `
 <!DOCTYPE html>
 <html>
 <head>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 ${cssCode}
 </style>
-
 </head>
-
 <body>
-
 ${htmlCode}
-
 <script>
+try {
 ${jsCode}
+} catch (e) {
+  document.body.insertAdjacentHTML('beforeend', '<pre style="color:red;white-space:pre-wrap;">' + e + '</pre>');
+}
 <\/script>
-
 </body>
-</html>
-`;
-
+</html>`;
 }
 
-function loadEditor(){
+function rewriteLocalImageSources(html) {
+  const doc = new DOMParser().parseFromString(`<div id="root">${html}</div>`, "text/html");
+  const root = doc.getElementById("root");
 
-if(language.value === "html"){
-  editor.value = htmlCode;
+  if (!root) return html;
+
+  root.querySelectorAll("img").forEach(img => {
+    const src = img.getAttribute("src");
+    if (!src) return;
+    const cleaned = normalizePath(src);
+    if (state.files[cleaned]) {
+      img.setAttribute("src", state.files[cleaned]);
+    }
+  });
+
+  return root.innerHTML;
 }
 
-if(language.value === "css"){
-  editor.value = cssCode;
+function refreshOutput() {
+  output.srcdoc = getPreviewHtml();
 }
 
-if(language.value === "js"){
-  editor.value = jsCode;
+function updateCurrentFileContent() {
+  if (!currentFile || !(currentFile in state.files)) return;
+  if (isImageFile(currentFile)) return;
+
+  state.files[currentFile] = editor.value;
+  saveState();
+  refreshOutput();
 }
 
+function createNewFile() {
+  const path = prompt("File path (example: pages/home.html or css/new.css):", "newfile.html");
+  if (!path) return;
+
+  const clean = normalizePath(path);
+  if (!clean) return;
+
+  if (state.files[clean] !== undefined) {
+    alert("That file already exists.");
+    return;
+  }
+
+  createFile(clean, "");
+  renderTree();
+  openFile(clean);
 }
 
-function switchFile(type){
+function createNewFolder() {
+  const path = prompt("Folder path (example: pages/components):", "pages");
+  if (!path) return;
 
-language.value = type;
+  const clean = normalizePath(path);
+  if (!clean) return;
 
-loadEditor();
-
+  ensureFolder(clean);
+  renderTree();
+  openFolder(clean);
+  setStatus("Folder created: " + clean);
 }
 
-language.addEventListener("change", loadEditor);
-
-editor.addEventListener("input", ()=>{
-
-if(language.value === "html"){
-  htmlCode = editor.value;
+function openFolder(folderPath) {
+  folderPath = normalizePath(folderPath);
+  if (!folderPath) return;
+  openFolders.add(folderPath);
+  saveState();
+  renderTree();
 }
 
-if(language.value === "css"){
-  cssCode = editor.value;
+function renameCurrent() {
+  if (!currentFile) return;
+
+  const oldPath = currentFile;
+  const isFolder = state.folders.includes(oldPath);
+  const promptLabel = isFolder ? "New folder path:" : "New file path:";
+  const newPath = prompt(promptLabel, oldPath);
+  if (!newPath) return;
+
+  renamePath(oldPath, newPath);
+  currentFile = normalizePath(newPath);
+  if (currentFile in state.files) openFile(currentFile);
+  renderTree();
+  saveState();
 }
 
-if(language.value === "js"){
-  jsCode = editor.value;
+function deleteCurrent() {
+  if (!currentFile) return;
+
+  const sure = confirm("Delete " + currentFile + " ?");
+  if (!sure) return;
+
+  const toDelete = currentFile;
+  deleteFileOrFolder(toDelete);
+  currentFile = "index.html";
+  if (state.files[currentFile] !== undefined) {
+    openFile(currentFile);
+  } else {
+    currentFile = Object.keys(state.files)[0] || "";
+    if (currentFile) openFile(currentFile);
+    else {
+      editor.value = "";
+      currentFileEl.textContent = "No file selected";
+    }
+  }
+  renderTree();
+  saveState();
+  setStatus("Deleted");
 }
 
-localStorage.setItem(
-"htmlCode",
-htmlCode
-);
+function downloadJSON() {
+  const data = JSON.stringify({
+    folders: state.folders,
+    files: state.files,
+    currentFile,
+    openFolders: Array.from(openFolders),
+    activePreviewFiles
+  }, null, 2);
 
-localStorage.setItem(
-"cssCode",
-cssCode
-);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "project.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
-localStorage.setItem(
-"jsCode",
-jsCode
-);
+function importImages() {
+  const folder = prompt("Folder to save images in:", "images");
+  if (folder === null) return;
 
-refreshOutput();
+  const cleanFolder = normalizePath(folder);
+  if (cleanFolder) ensureFolder(cleanFolder);
 
+  imageInput.value = "";
+  imageInput.click();
+
+  imageInput.onchange = async () => {
+    const files = Array.from(imageInput.files || []);
+    if (!files.length) return;
+
+    for (const file of files) {
+      const dataUrl = await fileToDataURL(file);
+      const safeName = file.name.replace(/\s+/g, "_");
+      const fullPath = cleanFolder ? `${cleanFolder}/${safeName}` : safeName;
+
+      state.files[fullPath] = dataUrl;
+    }
+
+    saveState();
+    renderTree();
+    setStatus(files.length + " image(s) imported");
+    refreshOutput();
+  };
+}
+
+function fileToDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function setMode(type) {
+  const typeMap = {
+    html: activePreviewFiles.html,
+    css: activePreviewFiles.css,
+    js: activePreviewFiles.js
+  };
+
+  const path = typeMap[type];
+  if (path && state.files[path] !== undefined) {
+    openFile(path);
+    return;
+  }
+
+  const fallback = Object.keys(state.files).find(f => {
+    const ext = extOf(f);
+    return (type === "html" && ["html","htm"].includes(ext)) ||
+           (type === "css" && ext === "css") ||
+           (type === "js" && ext === "js");
+  });
+
+  if (fallback) openFile(fallback);
+}
+
+newFileBtn.onclick = createNewFile;
+newFolderBtn.onclick = createNewFolder;
+renameBtn.onclick = renameCurrent;
+deleteBtn.onclick = deleteCurrent;
+importImageBtn.onclick = importImages;
+exportBtn.onclick = downloadJSON;
+htmlBtn.onclick = () => setMode("html");
+cssBtn.onclick = () => setMode("css");
+jsBtn.onclick = () => setMode("js");
+
+editor.addEventListener("input", () => {
+  updateCurrentFileContent();
+  setStatus("Saved");
 });
 
-function downloadProject(){
+window.addEventListener("beforeunload", saveState);
 
-const project = `
------- index.html ------
+function init() {
+  renderTree();
 
-${htmlCode}
+  if (!state.files[currentFile]) {
+    currentFile = Object.keys(state.files)[0] || "";
+  }
 
------- style.css ------
+  if (currentFile) {
+    openFile(currentFile);
+  } else {
+    editor.value = "";
+    currentFileEl.textContent = "No file selected";
+    refreshOutput();
+  }
 
-${cssCode}
-
------- script.js ------
-
-${jsCode}
-`;
-
-const blob = new Blob(
-[project],
-{type:"text/plain"}
-);
-
-const a = document.createElement("a");
-
-a.href = URL.createObjectURL(blob);
-
-a.download = "project.txt";
-
-a.click();
-
+  saveState();
 }
 
-loadEditor();
-
-refreshOutput();
-
+init();
 </script>
 
 </body>
