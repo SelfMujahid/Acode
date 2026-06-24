@@ -6,356 +6,647 @@
 <title>Live Project Editor</title>
 
 <style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 :root{
-  --bg: #111;
-  --panel: #181818;
-  --panel2: #1f1f1f;
-  --line: #333;
-  --text: #eaeaea;
-  --muted: #aaa;
-  --accent: #00ff88;
-  --btn: #2f2f2f;
-  --btn2: #3b3b3b;
+  --bg:#0f172a;
+  --bg2:#111827;
+  --panel:#111827;
+  --panel2:#0b1220;
+  --card:rgba(17,24,39,.96);
+  --line:rgba(255,255,255,.08);
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --accent:#00c2ff;
+  --accent2:#4f46e5;
+  --good:#00c853;
+  --danger:#f6465d;
+  --warn:#f59e0b;
+  --shadow:0 18px 40px rgba(0,0,0,.28);
+  --radius:18px;
+  --radius-sm:12px;
+  --transition:.22s ease;
 }
 
-body {
-  height: 100vh;
-  overflow: hidden;
-  background: var(--bg);
-  color: var(--text);
-  font-family: sans-serif;
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
 }
 
-#app {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
+html,
+body{
+  height:100%;
 }
 
-#sidebar {
-  width: 270px;
-  min-width: 220px;
-  max-width: 45vw;
-  background: var(--panel);
-  border-right: 1px solid var(--line);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+body{
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(0,194,255,.10), transparent 28%),
+    radial-gradient(circle at top right, rgba(79,70,229,.12), transparent 25%),
+    linear-gradient(180deg, #09111f 0%, #0b1220 100%);
+  color:var(--text);
+  overflow:hidden;
 }
 
-#sidebar-header {
-  padding: 12px;
-  border-bottom: 1px solid var(--line);
+button,
+input,
+textarea{
+  font:inherit;
 }
 
-#sidebar-header h2 {
-  font-size: 16px;
-  margin-bottom: 10px;
+#backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity var(--transition);
+  z-index:20;
 }
 
-#sidebar-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+body.sidebar-open #backdrop{
+  opacity:1;
+  pointer-events:auto;
 }
 
-button {
-  border: 0;
-  background: var(--btn);
-  color: var(--text);
-  padding: 8px 10px;
-  border-radius: 8px;
-  font-size: 13px;
+#sidebar{
+  position:fixed;
+  top:0;
+  left:0;
+  bottom:0;
+  width:min(340px,88vw);
+  background:rgba(15,23,42,.96);
+  backdrop-filter:blur(18px);
+  border-right:1px solid var(--line);
+  transform:translateX(-102%);
+  transition:transform var(--transition);
+  z-index:30;
+  display:flex;
+  flex-direction:column;
+  box-shadow:var(--shadow);
 }
 
-button:active {
-  background: var(--btn2);
+body.sidebar-open #sidebar{
+  transform:translateX(0);
 }
 
-#tree {
-  overflow: auto;
-  flex: 1;
-  padding: 10px;
+#sidebar-header{
+  padding:14px;
+  border-bottom:1px solid var(--line);
 }
 
-.node {
-  user-select: none;
-  margin-bottom: 2px;
+#sidebar-title{
+  font-weight:800;
+  font-size:15px;
+  letter-spacing:.3px;
+  margin-bottom:10px;
 }
 
-.node-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 8px;
-  border-radius: 8px;
-  cursor: pointer;
+#sidebar-sub{
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:12px;
 }
 
-.node-row:hover {
-  background: #242424;
+#tree{
+  flex:1;
+  overflow:auto;
+  padding:10px 10px 18px;
 }
 
-.node-row.active {
-  background: #2b2b2b;
-  outline: 1px solid #444;
+#tree::-webkit-scrollbar,
+#dialog-root::-webkit-scrollbar{
+  width:8px;
+  height:8px;
 }
 
-.node-children {
-  margin-left: 16px;
-  padding-left: 8px;
-  border-left: 1px dashed #303030;
+#tree::-webkit-scrollbar-thumb,
+#dialog-root::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,.18);
+  border-radius:999px;
 }
 
-.twisty {
-  width: 14px;
-  display: inline-block;
-  color: var(--muted);
+#tree::-webkit-scrollbar-track,
+#dialog-root::-webkit-scrollbar-track{
+  background:transparent;
 }
 
-.icon {
-  width: 18px;
-  display: inline-block;
-  text-align: center;
-  color: var(--accent);
+.folder-node,
+.file-node{
+  margin-bottom:4px;
 }
 
-.name {
-  font-size: 13px;
-  word-break: break-word;
+.node-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:9px 10px;
+  border-radius:12px;
+  transition:background var(--transition), transform var(--transition);
+  user-select:none;
 }
 
-.small {
-  font-size: 12px;
-  color: var(--muted);
+.node-row:hover{
+  background:rgba(255,255,255,.05);
 }
 
-#main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+.node-row.active{
+  background:rgba(0,194,255,.10);
+  outline:1px solid rgba(0,194,255,.18);
 }
 
-#topbar {
-  padding: 10px;
-  background: var(--panel2);
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
+.node-left{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  flex:1;
 }
 
-#current-file {
-  margin-left: auto;
-  color: var(--muted);
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 45%;
+.twisty{
+  width:16px;
+  text-align:center;
+  color:var(--muted);
+  font-size:12px;
+  flex:0 0 auto;
 }
 
-#editor-wrap {
-  height: 30%;
-  min-height: 180px;
-  display: flex;
-  flex-direction: column;
-  border-bottom: 1px solid var(--line);
+.node-icon{
+  width:18px;
+  text-align:center;
+  flex:0 0 auto;
+  color:#67e8f9;
 }
 
-#editor {
-  flex: 1;
-  width: 100%;
-  border: 0;
-  outline: none;
-  resize: none;
-  background: #101010;
-  color: var(--accent);
-  padding: 12px;
-  font-size: 14px;
-  line-height: 1.5;
-  font-family: monospace;
+.node-name{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:13px;
+  font-weight:600;
 }
 
-#image-preview-wrap {
-  flex: 1;
-  display: none;
-  background: #101010;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
-  padding: 10px;
+.node-actions{
+  display:flex;
+  gap:5px;
+  flex:0 0 auto;
 }
 
-#image-preview {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+.node-btn{
+  border:none;
+  cursor:pointer;
+  width:30px;
+  height:30px;
+  border-radius:10px;
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  transition:transform var(--transition), background var(--transition), border-color var(--transition);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:13px;
+  border:1px solid rgba(255,255,255,.07);
 }
 
-#output {
-  flex: 1;
-  width: 100%;
-  border: 0;
-  background: white;
+.node-btn:hover{
+  background:rgba(0,194,255,.12);
+  border-color:rgba(0,194,255,.22);
+  transform:translateY(-1px);
 }
 
-#status {
-  padding: 6px 10px;
-  font-size: 12px;
-  color: var(--muted);
-  border-top: 1px solid var(--line);
-  background: #141414;
+.node-children{
+  margin-left:18px;
+  padding-left:10px;
+  border-left:1px dashed rgba(255,255,255,.10);
+}
+
+.file-meta{
+  color:var(--muted);
+  font-size:11px;
+  margin-top:6px;
+  padding-left:6px;
+}
+
+#app{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+#topbar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px;
+  border-bottom:1px solid var(--line);
+  background:rgba(9,17,31,.78);
+  backdrop-filter:blur(18px);
+}
+
+.icon-btn{
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  transition:transform var(--transition), background var(--transition), border-color var(--transition);
+}
+
+.icon-btn:hover{
+  background:rgba(255,255,255,.10);
+  border-color:rgba(255,255,255,.12);
+  transform:translateY(-1px);
+}
+
+#project-name{
+  font-weight:800;
+  font-size:15px;
+  letter-spacing:.2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:34vw;
+}
+
+#current-file{
+  margin-left:auto;
+  color:var(--muted);
+  font-size:12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:42vw;
+}
+
+#workspace{
+  flex:1;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+
+#editor-pane{
+  height:30%;
+  min-height:180px;
+  display:flex;
+  flex-direction:column;
+  border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.02);
+}
+
+#editor{
+  flex:1;
+  width:100%;
+  border:none;
+  outline:none;
+  resize:none;
+  padding:14px;
+  background:#0b1220;
+  color:#6ee7b7;
+  font-size:14px;
+  line-height:1.55;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+}
+
+#image-preview-wrap{
+  flex:1;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:12px;
+  background:#0b1220;
+  overflow:auto;
+}
+
+#image-preview{
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+}
+
+#preview{
+  flex:1;
+  width:100%;
+  border:none;
+  background:#fff;
+}
+
+#status{
+  height:28px;
+  padding:0 12px;
+  display:flex;
+  align-items:center;
+  border-top:1px solid var(--line);
+  background:rgba(9,17,31,.84);
+  color:var(--muted);
+  font-size:12px;
 }
 
 input[type="file"]{
-  display: none;
+  display:none;
+}
+
+/* Dialog */
+#dialog-root{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:rgba(0,0,0,.52);
+  backdrop-filter:blur(6px);
+  overflow:auto;
+}
+
+#dialog-root.open{
+  display:flex;
+}
+
+.dialog-card{
+  width:min(100%, 460px);
+  background:linear-gradient(180deg, rgba(15,23,42,.98), rgba(9,17,31,.98));
+  color:var(--text);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:22px;
+  box-shadow:0 30px 80px rgba(0,0,0,.4);
+  padding:18px;
+}
+
+.dialog-title{
+  font-size:18px;
+  font-weight:800;
+  margin-bottom:8px;
+}
+
+.dialog-message{
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:14px;
+  line-height:1.5;
+}
+
+.dialog-input{
+  width:100%;
+  border-radius:14px;
+  border:1px solid rgba(148,163,184,.22);
+  background:#0b1220;
+  color:var(--text);
+  padding:12px 14px;
+  outline:none;
+}
+
+.dialog-input:focus{
+  border-color:rgba(0,194,255,.7);
+  box-shadow:0 0 0 4px rgba(0,194,255,.12);
+}
+
+.dialog-textarea{
+  width:100%;
+  min-height:120px;
+  resize:vertical;
+}
+
+.dialog-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:16px;
+}
+
+.dialog-btn{
+  border:none;
+  border-radius:12px;
+  padding:11px 16px;
+  cursor:pointer;
+  font-weight:700;
+  transition:transform var(--transition), filter var(--transition), background var(--transition);
+}
+
+.dialog-btn:hover{
+  transform:translateY(-1px);
+}
+
+.dialog-btn.secondary{
+  background:#253247;
+  color:#e5e7eb;
+}
+
+.dialog-btn.primary{
+  background:linear-gradient(135deg, var(--accent), var(--accent2));
+  color:white;
+}
+
+.dialog-btn.danger{
+  background:linear-gradient(135deg, var(--danger), #ff7b8d);
+  color:white;
+}
+
+.dialog-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  max-height:300px;
+  overflow:auto;
+  padding-right:4px;
+}
+
+.dialog-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:11px 12px;
+  border-radius:14px;
+  background:#0b1220;
+  border:1px solid rgba(255,255,255,.08);
+  cursor:pointer;
+}
+
+.dialog-item:hover{
+  background:#101a2d;
+}
+
+.dialog-item strong{
+  font-size:14px;
+}
+
+.dialog-item span{
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* Small screens */
+@media (max-width: 900px){
+  #project-name{
+    max-width:28vw;
+  }
+
+  #current-file{
+    max-width:34vw;
+  }
+
+  #editor-pane{
+    min-height:170px;
+  }
 }
 </style>
 </head>
 <body>
+<div id="backdrop"></div>
+
+<aside id="sidebar">
+  <div id="sidebar-header">
+    <div id="sidebar-title">Project Files</div>
+    <div id="sidebar-sub">Click a file to open it. Use folder icons to create items inside that folder.</div>
+  </div>
+  <div id="tree"></div>
+</aside>
+
+<div id="dialog-root"></div>
 
 <div id="app">
-  <aside id="sidebar">
-    <div id="sidebar-header">
-      <h2>Project</h2>
-      <div id="sidebar-actions">
-        <button id="newFileBtn">New File</button>
-        <button id="newFolderBtn">New Folder</button>
-        <button id="renameBtn">Rename</button>
-        <button id="deleteBtn">Delete</button>
-        <button id="importImageBtn">Import Image</button>
-        <button id="exportBtn">Export JSON</button>
-      </div>
-    </div>
-    <div id="tree"></div>
-  </aside>
+  <div id="topbar">
+    <button class="icon-btn" id="menuBtn" title="Open sidebar">☰</button>
+    <button class="icon-btn" id="newProjectBtn" title="New project">＋</button>
+    <div id="project-name"></div>
+    <div id="current-file">No file selected</div>
+  </div>
 
-  <section id="main">
-    <div id="topbar">
-      <button id="htmlBtn">HTML</button>
-      <button id="cssBtn">CSS</button>
-      <button id="jsBtn">JavaScript</button>
-      <span id="current-file">No file selected</span>
-    </div>
-
-    <div id="editor-wrap">
+  <div id="workspace">
+    <div id="editor-pane">
       <textarea id="editor" spellcheck="false"></textarea>
       <div id="image-preview-wrap">
         <img id="image-preview" alt="preview" />
       </div>
     </div>
-
-    <iframe id="output"></iframe>
+    <iframe id="preview"></iframe>
     <div id="status">Ready</div>
-  </section>
+  </div>
 </div>
 
-<input id="imageInput" type="file" accept="image/*" multiple />
+<input id="fileInput" type="file" multiple />
 
 <script>
-const STORAGE_KEY = "liveProjectV2";
+const STORAGE_KEY = "liveProjectWorkspaceV5";
 
-const treeEl = document.getElementById("tree");
-const editor = document.getElementById("editor");
-const output = document.getElementById("output");
-const statusEl = document.getElementById("status");
+const backdrop = document.getElementById("backdrop");
+const sidebar = document.getElementById("sidebar");
+const tree = document.getElementById("tree");
+const dialogRoot = document.getElementById("dialog-root");
+const menuBtn = document.getElementById("menuBtn");
+const newProjectBtn = document.getElementById("newProjectBtn");
+const projectNameEl = document.getElementById("project-name");
 const currentFileEl = document.getElementById("current-file");
-const imageWrap = document.getElementById("image-preview-wrap");
+const editor = document.getElementById("editor");
+const preview = document.getElementById("preview");
+const statusEl = document.getElementById("status");
+const fileInput = document.getElementById("fileInput");
+const imagePreviewWrap = document.getElementById("image-preview-wrap");
 const imagePreview = document.getElementById("image-preview");
-const imageInput = document.getElementById("imageInput");
 
-const newFileBtn = document.getElementById("newFileBtn");
-const newFolderBtn = document.getElementById("newFolderBtn");
-const renameBtn = document.getElementById("renameBtn");
-const deleteBtn = document.getElementById("deleteBtn");
-const importImageBtn = document.getElementById("importImageBtn");
-const exportBtn = document.getElementById("exportBtn");
-
-const htmlBtn = document.getElementById("htmlBtn");
-const cssBtn = document.getElementById("cssBtn");
-const jsBtn = document.getElementById("jsBtn");
-
-let state = loadState();
-
-let currentFile = state.currentFile || "index.html";
-let openFolders = new Set(state.openFolders || [""]);
-let activePreviewFiles = state.activePreviewFiles || {
-  html: "index.html",
-  css: "style.css",
-  js: "app.js"
+let project = loadProject();
+let currentFile = project.currentFile || `${project.root}/index.html`;
+let expandedFolders = new Set(project.expandedFolders || [project.root]);
+let activePreviewFiles = project.activePreviewFiles || {
+  html: `${project.root}/index.html`,
+  css: `${project.root}/style.css`,
+  js: `${project.root}/app.js`
 };
 
-function defaultProject() {
+function createDefaultProject(rootName) {
+  const root = normalizePath(rootName) || "MyProject";
+  const folders = [root];
+  const files = {};
+  files[`${root}/index.html`] = `<h1>Hello</h1>
+<p>Live project editor</p>
+<img src="assets/logo.png" alt="logo" style="max-width:220px;display:block;margin-top:12px;">`;
+  files[`${root}/style.css`] = `body{
+  background:#111;
+  color:lime;
+  font-family:sans-serif;
+  padding:20px;
+}`;
+  files[`${root}/app.js`] = `console.log("Hello");`;
+
   return {
-    folders: ["css", "js", "images"],
-    files: {
-      "index.html": `<h1>Hello</h1>\n<p>Live project editor</p>\n<img src="images/logo.png" alt="logo" style="max-width:200px;">`,
-      "style.css": `body{\n  background:black;\n  color:lime;\n  font-family:sans-serif;\n}\n`,
-      "app.js": `console.log("Hello");\n`
+    root,
+    folders,
+    files,
+    currentFile: `${root}/index.html`,
+    expandedFolders: [root],
+    activePreviewFiles: {
+      html: `${root}/index.html`,
+      css: `${root}/style.css`,
+      js: `${root}/app.js`
     }
   };
 }
 
-function loadState() {
+function loadProject() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultProjectWrapper();
+    if (!raw) return createDefaultProject("MyProject");
     const parsed = JSON.parse(raw);
-    return normalizeState(parsed);
+    return normalizeProject(parsed);
   } catch (e) {
-    return defaultProjectWrapper();
+    return createDefaultProject("MyProject");
   }
 }
 
-function defaultProjectWrapper() {
-  const d = defaultProject();
+function normalizeProject(data) {
+  const fallback = createDefaultProject("MyProject");
+
+  const root = normalizePath(data?.root || fallback.root) || fallback.root;
+  const folders = Array.isArray(data?.folders) ? data.folders.map(normalizePath).filter(Boolean) : fallback.folders.slice();
+  const files = data?.files && typeof data.files === "object" ? data.files : fallback.files;
+
+  folders.unshift(root);
+  const uniqueFolders = [...new Set(folders)];
+
+  const normalizedFiles = {};
+  for (const [key, value] of Object.entries(files)) {
+    const p = normalizePath(key);
+    if (p) normalizedFiles[p] = value;
+  }
+
+  const current = normalizePath(data?.currentFile || fallback.currentFile) || `${root}/index.html`;
+  const expanded = Array.isArray(data?.expandedFolders) ? data.expandedFolders.map(normalizePath).filter(Boolean) : [root];
+  const previewFiles = data?.activePreviewFiles && typeof data.activePreviewFiles === "object"
+    ? {
+        html: normalizePath(data.activePreviewFiles.html || `${root}/index.html`),
+        css: normalizePath(data.activePreviewFiles.css || `${root}/style.css`),
+        js: normalizePath(data.activePreviewFiles.js || `${root}/app.js`)
+      }
+    : {
+        html: `${root}/index.html`,
+        css: `${root}/style.css`,
+        js: `${root}/app.js`
+      };
+
   return {
-    folders: d.folders,
-    files: d.files,
-    currentFile: "index.html",
-    openFolders: [""],
-    activePreviewFiles: {
-      html: "index.html",
-      css: "style.css",
-      js: "app.js"
-    }
+    root,
+    folders: uniqueFolders,
+    files: normalizedFiles,
+    currentFile: current,
+    expandedFolders: [...new Set(expanded)],
+    activePreviewFiles: previewFiles
   };
 }
 
-function normalizeState(obj) {
-  const fallback = defaultProjectWrapper();
-  const files = obj?.files && typeof obj.files === "object" ? obj.files : fallback.files;
-  const folders = Array.isArray(obj?.folders) ? obj.folders : fallback.folders;
-  const currentFile = typeof obj?.currentFile === "string" ? obj.currentFile : fallback.currentFile;
-  const openFolders = Array.isArray(obj?.openFolders) ? obj.openFolders : fallback.openFolders;
-  const activePreviewFiles = obj?.activePreviewFiles && typeof obj.activePreviewFiles === "object"
-    ? {
-        html: obj.activePreviewFiles.html || "index.html",
-        css: obj.activePreviewFiles.css || "style.css",
-        js: obj.activePreviewFiles.js || "app.js"
-      }
-    : fallback.activePreviewFiles;
-
-  return { folders, files, currentFile, openFolders, activePreviewFiles };
-}
-
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    folders: state.folders,
-    files: state.files,
-    currentFile,
-    openFolders: Array.from(openFolders),
-    activePreviewFiles
-  }));
+function saveProject() {
+  project.currentFile = currentFile;
+  project.expandedFolders = [...expandedFolders];
+  project.activePreviewFiles = activePreviewFiles;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
+  projectNameEl.textContent = project.root;
 }
 
 function setStatus(msg) {
@@ -373,12 +664,14 @@ function normalizePath(path) {
 
 function parentPath(path) {
   path = normalizePath(path);
+  if (!path) return "";
   const idx = path.lastIndexOf("/");
   return idx === -1 ? "" : path.slice(0, idx);
 }
 
 function baseName(path) {
   path = normalizePath(path);
+  if (!path) return "";
   const idx = path.lastIndexOf("/");
   return idx === -1 ? path : path.slice(idx + 1);
 }
@@ -390,61 +683,129 @@ function extOf(path) {
 }
 
 function isImageFile(path) {
-  return ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "avif"].includes(extOf(path));
+  return ["png","jpg","jpeg","gif","webp","bmp","svg","avif"].includes(extOf(path));
 }
 
 function isTextFile(path) {
   return !isImageFile(path);
 }
 
+function joinPath(base, name) {
+  const a = normalizePath(base);
+  const b = normalizePath(name);
+  return normalizePath(a ? `${a}/${b}` : b);
+}
+
+function uniqueFilePath(path) {
+  path = normalizePath(path);
+  if (!path) return path;
+
+  if (!project.files[path] && !project.folders.includes(path)) return path;
+
+  const lastDot = path.lastIndexOf(".");
+  const lastSlash = path.lastIndexOf("/");
+  const hasExt = lastDot > lastSlash;
+
+  const base = hasExt ? path.slice(0, lastDot) : path;
+  const ext = hasExt ? path.slice(lastDot) : "";
+
+  let i = 1;
+  let candidate = path;
+  while (project.files[candidate] || project.folders.includes(candidate)) {
+    candidate = `${base} (${i})${ext}`;
+    i++;
+  }
+  return candidate;
+}
+
 function ensureFolder(folderPath) {
   folderPath = normalizePath(folderPath);
   if (!folderPath) return;
+
   const parts = folderPath.split("/");
   let acc = "";
   for (const part of parts) {
-    acc = acc ? acc + "/" + part : part;
-    if (!state.folders.includes(acc)) state.folders.push(acc);
+    acc = acc ? `${acc}/${part}` : part;
+    if (!project.folders.includes(acc)) project.folders.push(acc);
   }
-  saveState();
+
+  expandedFolders.add(folderPath);
+  saveProject();
 }
 
 function createFile(filePath, content = "") {
   filePath = normalizePath(filePath);
   if (!filePath) return false;
+
   const dir = parentPath(filePath);
   if (dir) ensureFolder(dir);
-  state.files[filePath] = content;
-  if (!state.currentFile) currentFile = filePath;
-  saveState();
-  return true;
+
+  const finalPath = uniqueFilePath(filePath);
+  project.files[finalPath] = content;
+  saveProject();
+  return finalPath;
 }
 
 function deleteFileOrFolder(path) {
   path = normalizePath(path);
   if (!path) return;
 
-  const isFolder = state.folders.includes(path);
-  if (isFolder) {
-    const prefix = path + "/";
-    for (const filePath of Object.keys(state.files)) {
-      if (filePath === path || filePath.startsWith(prefix)) delete state.files[filePath];
-    }
-    state.folders = state.folders.filter(f => f !== path && !f.startsWith(prefix));
-    if (currentFile === path || currentFile.startsWith(prefix)) currentFile = "index.html";
-    activePreviewFiles.html = state.files[activePreviewFiles.html] ? activePreviewFiles.html : "index.html";
-    activePreviewFiles.css = state.files[activePreviewFiles.css] ? activePreviewFiles.css : "style.css";
-    activePreviewFiles.js = state.files[activePreviewFiles.js] ? activePreviewFiles.js : "app.js";
-    setStatus("Folder deleted");
-  } else {
-    delete state.files[path];
-    if (currentFile === path) currentFile = "index.html";
-    if (activePreviewFiles.html === path) activePreviewFiles.html = Object.keys(state.files).find(f => extOf(f) === "html") || "index.html";
-    if (activePreviewFiles.css === path) activePreviewFiles.css = Object.keys(state.files).find(f => extOf(f) === "css") || "style.css";
-    if (activePreviewFiles.js === path) activePreviewFiles.js = Object.keys(state.files).find(f => extOf(f) === "js") || "app.js";
-    setStatus("File deleted");
+  if (path === project.root) {
+    for (const key of Object.keys(project.files)) delete project.files[key];
+    project.folders = [project.root];
+    expandedFolders = new Set([project.root]);
+    activePreviewFiles = {
+      html: `${project.root}/index.html`,
+      css: `${project.root}/style.css`,
+      js: `${project.root}/app.js`
+    };
+    project.files[`${project.root}/index.html`] = `<h1>New Project</h1>`;
+    project.files[`${project.root}/style.css`] = `body{font-family:sans-serif;padding:20px;}`;
+    project.files[`${project.root}/app.js`] = `console.log("New project");`;
+    currentFile = `${project.root}/index.html`;
+    saveProject();
+    renderAll();
+    openFile(currentFile);
+    setStatus("Project reset");
+    return;
   }
-  saveState();
+
+  const isFolder = project.folders.includes(path);
+
+  if (isFolder) {
+    const prefix = `${path}/`;
+    for (const f of Object.keys(project.files)) {
+      if (f === path || f.startsWith(prefix)) delete project.files[f];
+    }
+    project.folders = project.folders.filter(f => f !== path && !f.startsWith(prefix));
+    expandedFolders = new Set([...expandedFolders].filter(f => f !== path && !f.startsWith(prefix)));
+
+    if (currentFile === path || currentFile.startsWith(prefix)) currentFile = `${project.root}/index.html`;
+    if (activePreviewFiles.html === path || activePreviewFiles.html.startsWith(prefix)) activePreviewFiles.html = `${project.root}/index.html`;
+    if (activePreviewFiles.css === path || activePreviewFiles.css.startsWith(prefix)) activePreviewFiles.css = `${project.root}/style.css`;
+    if (activePreviewFiles.js === path || activePreviewFiles.js.startsWith(prefix)) activePreviewFiles.js = `${project.root}/app.js`;
+
+    if (!project.files[currentFile]) currentFile = Object.keys(project.files)[0] || "";
+    saveProject();
+    renderAll();
+    if (currentFile) openFile(currentFile);
+    setStatus("Folder deleted");
+    return;
+  }
+
+  delete project.files[path];
+
+  if (currentFile === path) currentFile = `${project.root}/index.html`;
+  if (activePreviewFiles.html === path) activePreviewFiles.html = `${project.root}/index.html`;
+  if (activePreviewFiles.css === path) activePreviewFiles.css = `${project.root}/style.css`;
+  if (activePreviewFiles.js === path) activePreviewFiles.js = `${project.root}/app.js`;
+
+  if (!project.files[currentFile]) currentFile = Object.keys(project.files)[0] || "";
+
+  saveProject();
+  renderAll();
+  if (currentFile) openFile(currentFile);
+  setStatus("Deleted");
 }
 
 function renamePath(oldPath, newPath) {
@@ -452,454 +813,673 @@ function renamePath(oldPath, newPath) {
   newPath = normalizePath(newPath);
   if (!oldPath || !newPath || oldPath === newPath) return;
 
-  if (state.files[oldPath] !== undefined) {
-    const content = state.files[oldPath];
-    delete state.files[oldPath];
-    state.files[newPath] = content;
+  if (project.files[oldPath] !== undefined) {
+    const target = uniqueFilePath(newPath);
+    const content = project.files[oldPath];
+    delete project.files[oldPath];
+    project.files[target] = content;
 
-    if (currentFile === oldPath) currentFile = newPath;
-    if (activePreviewFiles.html === oldPath) activePreviewFiles.html = newPath;
-    if (activePreviewFiles.css === oldPath) activePreviewFiles.css = newPath;
-    if (activePreviewFiles.js === oldPath) activePreviewFiles.js = newPath;
+    if (currentFile === oldPath) currentFile = target;
+    if (activePreviewFiles.html === oldPath) activePreviewFiles.html = target;
+    if (activePreviewFiles.css === oldPath) activePreviewFiles.css = target;
+    if (activePreviewFiles.js === oldPath) activePreviewFiles.js = target;
 
-    const newParent = parentPath(newPath);
-    if (newParent) ensureFolder(newParent);
+    saveProject();
+    renderAll();
+    openFile(target);
     setStatus("File renamed");
-  } else if (state.folders.includes(oldPath)) {
-    const oldPrefix = oldPath + "/";
-    const newPrefix = newPath + "/";
-    state.files = Object.fromEntries(
-      Object.entries(state.files).map(([k, v]) => {
-        if (k === oldPath) return [newPath, v];
-        if (k.startsWith(oldPrefix)) return [newPrefix + k.slice(oldPrefix.length), v];
-        return [k, v];
-      })
-    );
+    return;
+  }
 
-    state.folders = state.folders
-      .filter(f => f !== oldPath && !f.startsWith(oldPrefix))
-      .map(f => (f.startsWith(oldPrefix) ? newPrefix + f.slice(oldPrefix.length) : f));
+  if (project.folders.includes(oldPath)) {
+    const target = normalizePath(newPath);
+    const oldPrefix = `${oldPath}/`;
+    const newPrefix = `${target}/`;
 
-    state.folders.push(newPath);
-    openFolders = new Set(Array.from(openFolders).map(f => {
-      if (f === oldPath) return newPath;
-      if (f.startsWith(oldPrefix)) return newPrefix + f.slice(oldPrefix.length);
+    project.folders = project.folders.map(f => {
+      if (f === oldPath) return target;
+      if (f.startsWith(oldPrefix)) return `${newPrefix}${f.slice(oldPrefix.length)}`;
+      return f;
+    });
+
+    const movedFiles = {};
+    for (const [key, value] of Object.entries(project.files)) {
+      if (key.startsWith(oldPrefix)) {
+        movedFiles[`${newPrefix}${key.slice(oldPrefix.length)}`] = value;
+      } else if (key === oldPath) {
+        movedFiles[target] = value;
+      } else {
+        movedFiles[key] = value;
+      }
+    }
+    project.files = movedFiles;
+
+    expandedFolders = new Set([...expandedFolders].map(f => {
+      if (f === oldPath) return target;
+      if (f.startsWith(oldPrefix)) return `${newPrefix}${f.slice(oldPrefix.length)}`;
       return f;
     }));
 
     if (currentFile === oldPath || currentFile.startsWith(oldPrefix)) {
-      currentFile = currentFile.replace(oldPrefix, newPrefix);
+      currentFile = `${newPrefix}${currentFile.slice(oldPrefix.length)}`;
     }
 
-    if (activePreviewFiles.html === oldPath) activePreviewFiles.html = newPath;
-    if (activePreviewFiles.css === oldPath) activePreviewFiles.css = newPath;
-    if (activePreviewFiles.js === oldPath) activePreviewFiles.js = newPath;
+    if (activePreviewFiles.html === oldPath || activePreviewFiles.html.startsWith(oldPrefix)) {
+      activePreviewFiles.html = `${newPrefix}${activePreviewFiles.html.slice(oldPrefix.length)}`;
+    }
+    if (activePreviewFiles.css === oldPath || activePreviewFiles.css.startsWith(oldPrefix)) {
+      activePreviewFiles.css = `${newPrefix}${activePreviewFiles.css.slice(oldPrefix.length)}`;
+    }
+    if (activePreviewFiles.js === oldPath || activePreviewFiles.js.startsWith(oldPrefix)) {
+      activePreviewFiles.js = `${newPrefix}${activePreviewFiles.js.slice(oldPrefix.length)}`;
+    }
 
+    project.root = project.root === oldPath ? target : project.root;
+    if (!currentFile || !project.files[currentFile]) currentFile = `${project.root}/index.html`;
+
+    saveProject();
+    renderAll();
+    if (project.files[currentFile]) openFile(currentFile);
     setStatus("Folder renamed");
   }
-  saveState();
 }
 
 function childrenFolders(folderPath) {
   folderPath = normalizePath(folderPath);
-  return [...new Set(state.folders)]
-    .filter(f => parentPath(f) === folderPath)
+  return [...new Set(project.folders)]
+    .filter(f => f !== folderPath && parentPath(f) === folderPath)
     .sort((a, b) => baseName(a).localeCompare(baseName(b)));
 }
 
 function childrenFiles(folderPath) {
   folderPath = normalizePath(folderPath);
-  return Object.keys(state.files)
+  return Object.keys(project.files)
     .filter(f => parentPath(f) === folderPath)
     .sort((a, b) => baseName(a).localeCompare(baseName(b)));
 }
 
-function buildTreeNode(folderPath, depth = 0) {
-  const node = document.createElement("div");
-  node.className = "node";
+function setSidebarOpen(open) {
+  document.body.classList.toggle("sidebar-open", open);
+}
+
+function closeSidebar() {
+  setSidebarOpen(false);
+}
+
+function toggleSidebar() {
+  setSidebarOpen(!document.body.classList.contains("sidebar-open"));
+}
+
+function openFile(path) {
+  path = normalizePath(path);
+  if (!(path in project.files)) return;
+
+  currentFile = path;
+  currentFileEl.textContent = path;
+
+  const ext = extOf(path);
+  if (["html","htm"].includes(ext)) activePreviewFiles.html = path;
+  if (ext === "css") activePreviewFiles.css = path;
+  if (ext === "js") activePreviewFiles.js = path;
+
+  if (isImageFile(path)) {
+    editor.style.display = "none";
+    imagePreviewWrap.style.display = "flex";
+    imagePreview.src = project.files[path];
+  } else {
+    imagePreviewWrap.style.display = "none";
+    editor.style.display = "block";
+    editor.value = project.files[path] ?? "";
+  }
+
+  saveProject();
+  refreshTree();
+  refreshPreview();
+
+  if (window.innerWidth < 900) closeSidebar();
+}
+
+function currentActiveClass(path, isFolder = false) {
+  if (!currentFile) return "";
+  if (isFolder) {
+    return currentFile === path || currentFile.startsWith(`${path}/`) ? "active" : "";
+  }
+  return currentFile === path ? "active" : "";
+}
+
+function makeNodeButton(symbol, title, handler, colorClass = "") {
+  const btn = document.createElement("button");
+  btn.className = `node-btn ${colorClass}`.trim();
+  btn.type = "button";
+  btn.title = title;
+  btn.textContent = symbol;
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    handler(e);
+  });
+  return btn;
+}
+
+function renderFolderNode(folderPath, isRoot = false) {
+  const wrap = document.createElement("div");
+  wrap.className = "folder-node";
 
   const row = document.createElement("div");
-  row.className = "node-row";
+  row.className = `node-row ${currentActiveClass(folderPath, true)}`.trim();
 
-  const isOpen = openFolders.has(folderPath);
-  const childFolders = childrenFolders(folderPath);
-  const childFiles = childrenFiles(folderPath);
+  const left = document.createElement("div");
+  left.className = "node-left";
 
   const twisty = document.createElement("span");
   twisty.className = "twisty";
-  twisty.textContent = folderPath === "" ? "▾" : (isOpen ? "▾" : "▸");
+  const open = expandedFolders.has(folderPath) || isRoot;
+  twisty.textContent = open ? "▾" : "▸";
 
   const icon = document.createElement("span");
-  icon.className = "icon";
-  icon.textContent = folderPath === "" ? "🗂" : "📁";
+  icon.className = "node-icon";
+  icon.textContent = "📁";
 
-  const name = document.createElement("span");
-  name.className = "name";
-  name.textContent = folderPath === "" ? "Project" : baseName(folderPath);
+  const name = document.createElement("div");
+  name.className = "node-name";
+  name.textContent = isRoot ? project.root : baseName(folderPath);
 
-  row.appendChild(twisty);
-  row.appendChild(icon);
-  row.appendChild(name);
+  left.appendChild(twisty);
+  left.appendChild(icon);
+  left.appendChild(name);
 
-  if (folderPath === currentFile) row.classList.add("active");
+  const actions = document.createElement("div");
+  actions.className = "node-actions";
 
-  row.onclick = () => {
-    if (folderPath === "") return;
-    if (openFolders.has(folderPath)) openFolders.delete(folderPath);
-    else openFolders.add(folderPath);
-    saveState();
-    renderTree();
-  };
+  actions.appendChild(makeNodeButton("＋F", "New folder", () => createFolderIn(folderPath)));
+  actions.appendChild(makeNodeButton("＋", "New file", () => createFileIn(folderPath)));
+  actions.appendChild(makeNodeButton("⤴", "Import file", () => importFilesTo(folderPath)));
+  actions.appendChild(makeNodeButton("✎", "Rename", () => renameNode(folderPath)));
+  actions.appendChild(makeNodeButton("🗑", "Delete", () => deleteNode(folderPath), "danger"));
 
-  node.appendChild(row);
+  row.appendChild(left);
+  row.appendChild(actions);
 
-  if (folderPath === "" || isOpen) {
+  row.addEventListener("click", () => {
+    if (expandedFolders.has(folderPath)) expandedFolders.delete(folderPath);
+    else expandedFolders.add(folderPath);
+    saveProject();
+    refreshTree();
+  });
+
+  wrap.appendChild(row);
+
+  if (open) {
     const children = document.createElement("div");
     children.className = "node-children";
 
-    for (const folder of childFolders) {
-      children.appendChild(buildTreeNode(folder, depth + 1));
+    for (const childFolder of childrenFolders(folderPath)) {
+      children.appendChild(renderFolderNode(childFolder, false));
     }
 
-    for (const file of childFiles) {
-      children.appendChild(buildFileNode(file));
+    for (const filePath of childrenFiles(folderPath)) {
+      children.appendChild(renderFileNode(filePath));
     }
 
-    node.appendChild(children);
+    wrap.appendChild(children);
   }
 
-  return node;
+  return wrap;
 }
 
-function buildFileNode(filePath) {
-  const node = document.createElement("div");
-  node.className = "node";
+function renderFileNode(filePath) {
+  const wrap = document.createElement("div");
+  wrap.className = "file-node";
 
   const row = document.createElement("div");
-  row.className = "node-row";
-  if (filePath === currentFile) row.classList.add("active");
+  row.className = `node-row ${currentActiveClass(filePath, false)}`.trim();
+
+  const left = document.createElement("div");
+  left.className = "node-left";
 
   const twisty = document.createElement("span");
   twisty.className = "twisty";
   twisty.textContent = " ";
 
   const icon = document.createElement("span");
-  icon.className = "icon";
+  icon.className = "node-icon";
   icon.textContent = isImageFile(filePath) ? "🖼" : "📄";
 
-  const name = document.createElement("span");
-  name.className = "name";
+  const name = document.createElement("div");
+  name.className = "node-name";
   name.textContent = baseName(filePath);
 
-  row.appendChild(twisty);
-  row.appendChild(icon);
-  row.appendChild(name);
+  left.appendChild(twisty);
+  left.appendChild(icon);
+  left.appendChild(name);
 
-  row.onclick = () => openFile(filePath);
+  const actions = document.createElement("div");
+  actions.className = "node-actions";
+  actions.appendChild(makeNodeButton("✎", "Rename", () => renameNode(filePath)));
+  actions.appendChild(makeNodeButton("🗑", "Delete", () => deleteNode(filePath), "danger"));
 
-  node.appendChild(row);
-  return node;
+  row.appendChild(left);
+  row.appendChild(actions);
+
+  row.addEventListener("click", () => openFile(filePath));
+
+  wrap.appendChild(row);
+  return wrap;
 }
 
-function renderTree() {
-  treeEl.innerHTML = "";
-  treeEl.appendChild(buildTreeNode(""));
+function refreshTree() {
+  tree.innerHTML = "";
+  tree.appendChild(renderFolderNode(project.root, true));
 
   const hint = document.createElement("div");
-  hint.className = "small";
-  hint.style.padding = "10px 8px 6px";
-  hint.textContent = "Use slashes in paths to make folders, e.g. images/logo.png";
-  treeEl.appendChild(hint);
+  hint.className = "file-meta";
+  hint.textContent = "Tip: folders can be nested. Use / in names or create items inside a folder.";
+  tree.appendChild(hint);
 }
 
-function openFile(filePath) {
-  filePath = normalizePath(filePath);
-  if (!(filePath in state.files)) return;
+async function createFolderIn(folderPath) {
+  const name = await showInputDialog({
+    title: "Create folder",
+    message: `Folder will be created inside: ${folderPath}`,
+    placeholder: "e.g. images or icons/ui",
+    value: ""
+  });
 
-  currentFile = filePath;
-  const ext = extOf(filePath);
+  if (!name) return;
 
-  if (["html", "htm"].includes(ext)) activePreviewFiles.html = filePath;
-  if (ext === "css") activePreviewFiles.css = filePath;
-  if (ext === "js") activePreviewFiles.js = filePath;
+  const full = uniquePath(joinPath(folderPath, name));
+  ensureFolder(full);
+  saveProject();
+  refreshTree();
+  setStatus(`Folder created: ${full}`);
+}
 
-  editor.value = state.files[filePath] ?? "";
-  currentFileEl.textContent = filePath;
+async function createFileIn(folderPath) {
+  const name = await showInputDialog({
+    title: "Create file",
+    message: `File will be created inside: ${folderPath}`,
+    placeholder: "e.g. page.html or components/card.js",
+    value: "new-file.html"
+  });
 
-  if (isImageFile(filePath)) {
-    editor.style.display = "none";
-    imageWrap.style.display = "flex";
-    imagePreview.src = state.files[filePath];
-    imagePreview.alt = filePath;
-  } else {
-    imageWrap.style.display = "none";
-    editor.style.display = "block";
+  if (!name) return;
+
+  const full = uniqueFilePath(joinPath(folderPath, name));
+  const created = createFile(full, "");
+  if (created) {
+    saveProject();
+    refreshTree();
+    openFile(created);
+    setStatus(`File created: ${created}`);
+  }
+}
+
+async function renameNode(path) {
+  path = normalizePath(path);
+  const current = baseName(path);
+
+  const newName = await showInputDialog({
+    title: "Rename",
+    message: "Enter the new name or path.",
+    placeholder: path,
+    value: current
+  });
+
+  if (!newName) return;
+
+  const isFolder = project.folders.includes(path);
+  const target = isFolder ? joinPath(parentPath(path), newName) : joinPath(parentPath(path), newName);
+  renamePath(path, target);
+}
+
+async function deleteNode(path) {
+  path = normalizePath(path);
+
+  const sure = await showConfirmDialog({
+    title: "Delete",
+    message: `Are you sure you want to delete "${path}"? This cannot be undone.`,
+    okText: "Delete",
+    danger: true
+  });
+
+  if (!sure) return;
+  deleteFileOrFolder(path);
+}
+
+function getAssetContentForSrc(src, htmlFilePath) {
+  if (!src) return src;
+  if (/^(https?:|data:|blob:|#|\/\/)/i.test(src)) return src;
+
+  const resolved = resolveProjectPath(htmlFilePath, src);
+  if (project.files[resolved] !== undefined) return project.files[resolved];
+
+  const direct = normalizePath(src);
+  if (project.files[direct] !== undefined) return project.files[direct];
+
+  return src;
+}
+
+function resolveProjectPath(baseFilePath, relativePath) {
+  const baseDir = parentPath(baseFilePath) || project.root;
+  const combined = `${baseDir}/${relativePath}`.replace(/\\/g, "/");
+  const parts = [];
+
+  for (const part of combined.split("/")) {
+    if (!part || part === ".") continue;
+    if (part === "..") {
+      if (parts.length) parts.pop();
+      continue;
+    }
+    parts.push(part);
   }
 
-  saveState();
-  renderTree();
-  refreshOutput();
-  setStatus("Opened " + filePath);
+  return parts.join("/");
 }
 
-function getPreviewHtml() {
-  const htmlPath = activePreviewFiles.html;
-  const cssPath = activePreviewFiles.css;
-  const jsPath = activePreviewFiles.js;
+function refreshPreview() {
+  const htmlPath = activePreviewFiles.html || `${project.root}/index.html`;
+  const cssPath = activePreviewFiles.css || `${project.root}/style.css`;
+  const jsPath = activePreviewFiles.js || `${project.root}/app.js`;
 
-  let htmlCode = state.files[htmlPath] || "";
-  let cssCode = state.files[cssPath] || "";
-  let jsCode = state.files[jsPath] || "";
+  const htmlCode = project.files[htmlPath] || "";
+  const cssCode = project.files[cssPath] || "";
+  const jsCode = project.files[jsPath] || "";
 
-  htmlCode = rewriteLocalImageSources(htmlCode);
+  let processedHTML = htmlCode;
 
-  return `
-<!DOCTYPE html>
+  try {
+    const doc = new DOMParser().parseFromString(`<div id="root">${htmlCode}</div>`, "text/html");
+    const root = doc.getElementById("root");
+    if (root) {
+      root.querySelectorAll("img,source,video,audio").forEach((el) => {
+        const attr = el.tagName.toLowerCase() === "source" ? "src" : "src";
+        const src = el.getAttribute(attr);
+        if (src) el.setAttribute(attr, getAssetContentForSrc(src, htmlPath));
+      });
+      root.querySelectorAll("link").forEach((el) => {
+        const href = el.getAttribute("href");
+        if (href) {
+          const resolved = resolveProjectPath(htmlPath, href);
+          if (project.files[resolved] !== undefined && isTextFile(resolved)) {
+            el.setAttribute("href", project.files[resolved]);
+          }
+        }
+      });
+      processedHTML = root.innerHTML;
+    }
+  } catch (e) {}
+
+  preview.srcdoc = `<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-${cssCode}
-</style>
+<style>${cssCode}</style>
 </head>
 <body>
-${htmlCode}
+${processedHTML}
 <script>
 try {
 ${jsCode}
 } catch (e) {
-  document.body.insertAdjacentHTML('beforeend', '<pre style="color:red;white-space:pre-wrap;">' + e + '</pre>');
+  document.body.insertAdjacentHTML("beforeend", "<pre style='color:red;white-space:pre-wrap;padding:12px;'>" + e + "</pre>");
 }
 <\/script>
 </body>
 </html>`;
 }
 
-function rewriteLocalImageSources(html) {
-  const doc = new DOMParser().parseFromString(`<div id="root">${html}</div>`, "text/html");
-  const root = doc.getElementById("root");
-
-  if (!root) return html;
-
-  root.querySelectorAll("img").forEach(img => {
-    const src = img.getAttribute("src");
-    if (!src) return;
-    const cleaned = normalizePath(src);
-    if (state.files[cleaned]) {
-      img.setAttribute("src", state.files[cleaned]);
-    }
-  });
-
-  return root.innerHTML;
-}
-
-function refreshOutput() {
-  output.srcdoc = getPreviewHtml();
-}
-
 function updateCurrentFileContent() {
-  if (!currentFile || !(currentFile in state.files)) return;
+  if (!currentFile || !(currentFile in project.files)) return;
   if (isImageFile(currentFile)) return;
 
-  state.files[currentFile] = editor.value;
-  saveState();
-  refreshOutput();
+  project.files[currentFile] = editor.value;
+
+  const ext = extOf(currentFile);
+  if (["html","htm"].includes(ext)) activePreviewFiles.html = currentFile;
+  if (ext === "css") activePreviewFiles.css = currentFile;
+  if (ext === "js") activePreviewFiles.js = currentFile;
+
+  saveProject();
+  refreshPreview();
+  setStatus("Saved");
 }
 
-function createNewFile() {
-  const path = prompt("File path (example: pages/home.html or css/new.css):", "newfile.html");
-  if (!path) return;
-
-  const clean = normalizePath(path);
-  if (!clean) return;
-
-  if (state.files[clean] !== undefined) {
-    alert("That file already exists.");
-    return;
-  }
-
-  createFile(clean, "");
-  renderTree();
-  openFile(clean);
-}
-
-function createNewFolder() {
-  const path = prompt("Folder path (example: pages/components):", "pages");
-  if (!path) return;
-
-  const clean = normalizePath(path);
-  if (!clean) return;
-
-  ensureFolder(clean);
-  renderTree();
-  openFolder(clean);
-  setStatus("Folder created: " + clean);
-}
-
-function openFolder(folderPath) {
-  folderPath = normalizePath(folderPath);
-  if (!folderPath) return;
-  openFolders.add(folderPath);
-  saveState();
-  renderTree();
-}
-
-function renameCurrent() {
-  if (!currentFile) return;
-
-  const oldPath = currentFile;
-  const isFolder = state.folders.includes(oldPath);
-  const promptLabel = isFolder ? "New folder path:" : "New file path:";
-  const newPath = prompt(promptLabel, oldPath);
-  if (!newPath) return;
-
-  renamePath(oldPath, newPath);
-  currentFile = normalizePath(newPath);
-  if (currentFile in state.files) openFile(currentFile);
-  renderTree();
-  saveState();
-}
-
-function deleteCurrent() {
-  if (!currentFile) return;
-
-  const sure = confirm("Delete " + currentFile + " ?");
-  if (!sure) return;
-
-  const toDelete = currentFile;
-  deleteFileOrFolder(toDelete);
-  currentFile = "index.html";
-  if (state.files[currentFile] !== undefined) {
+function newProject() {
+  showInputDialog({
+    title: "New project",
+    message: "This will create a fresh repo-style project workspace.",
+    placeholder: "Project name",
+    value: "MyProject"
+  }).then((name) => {
+    if (!name) return;
+    project = createDefaultProject(name);
+    expandedFolders = new Set(project.expandedFolders);
+    activePreviewFiles = { ...project.activePreviewFiles };
+    currentFile = project.currentFile;
+    saveProject();
+    refreshTree();
     openFile(currentFile);
-  } else {
-    currentFile = Object.keys(state.files)[0] || "";
-    if (currentFile) openFile(currentFile);
-    else {
-      editor.value = "";
-      currentFileEl.textContent = "No file selected";
+    setStatus(`Project created: ${project.root}`);
+  });
+}
+
+function openDialogShell() {
+  dialogRoot.innerHTML = "";
+  dialogRoot.classList.add("open");
+}
+
+function closeDialog() {
+  dialogRoot.classList.remove("open");
+  dialogRoot.innerHTML = "";
+}
+
+function showInputDialog({ title, message, placeholder = "", value = "", okText = "OK" }) {
+  return new Promise((resolve) => {
+    openDialogShell();
+
+    const card = document.createElement("div");
+    card.className = "dialog-card";
+
+    const h = document.createElement("div");
+    h.className = "dialog-title";
+    h.textContent = title;
+
+    const p = document.createElement("div");
+    p.className = "dialog-message";
+    p.textContent = message;
+
+    const input = document.createElement("input");
+    input.className = "dialog-input";
+    input.type = "text";
+    input.placeholder = placeholder;
+    input.value = value;
+
+    const actions = document.createElement("div");
+    actions.className = "dialog-actions";
+
+    const cancel = document.createElement("button");
+    cancel.className = "dialog-btn secondary";
+    cancel.type = "button";
+    cancel.textContent = "Cancel";
+
+    const ok = document.createElement("button");
+    ok.className = "dialog-btn primary";
+    ok.type = "button";
+    ok.textContent = okText;
+
+    function finish(v) {
+      closeDialog();
+      resolve(v);
     }
-  }
-  renderTree();
-  saveState();
-  setStatus("Deleted");
+
+    cancel.addEventListener("click", () => finish(null));
+    ok.addEventListener("click", () => {
+      const val = input.value.trim();
+      finish(val || null);
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") ok.click();
+      if (e.key === "Escape") cancel.click();
+    });
+
+    actions.appendChild(cancel);
+    actions.appendChild(ok);
+    card.appendChild(h);
+    card.appendChild(p);
+    card.appendChild(input);
+    card.appendChild(actions);
+    dialogRoot.appendChild(card);
+
+    setTimeout(() => input.focus(), 0);
+  });
 }
 
-function downloadJSON() {
-  const data = JSON.stringify({
-    folders: state.folders,
-    files: state.files,
-    currentFile,
-    openFolders: Array.from(openFolders),
-    activePreviewFiles
-  }, null, 2);
+function showConfirmDialog({ title, message, okText = "OK", danger = false }) {
+  return new Promise((resolve) => {
+    openDialogShell();
 
-  const blob = new Blob([data], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "project.json";
-  a.click();
-  URL.revokeObjectURL(url);
+    const card = document.createElement("div");
+    card.className = "dialog-card";
+
+    const h = document.createElement("div");
+    h.className = "dialog-title";
+    h.textContent = title;
+
+    const p = document.createElement("div");
+    p.className = "dialog-message";
+    p.textContent = message;
+
+    const actions = document.createElement("div");
+    actions.className = "dialog-actions";
+
+    const cancel = document.createElement("button");
+    cancel.className = "dialog-btn secondary";
+    cancel.type = "button";
+    cancel.textContent = "Cancel";
+
+    const ok = document.createElement("button");
+    ok.className = `dialog-btn ${danger ? "danger" : "primary"}`;
+    ok.type = "button";
+    ok.textContent = okText;
+
+    const finish = (value) => {
+      closeDialog();
+      resolve(value);
+    };
+
+    cancel.addEventListener("click", () => finish(false));
+    ok.addEventListener("click", () => finish(true));
+
+    actions.appendChild(cancel);
+    actions.appendChild(ok);
+    card.appendChild(h);
+    card.appendChild(p);
+    card.appendChild(actions);
+    dialogRoot.appendChild(card);
+  });
 }
 
-function importImages() {
-  const folder = prompt("Folder to save images in:", "images");
-  if (folder === null) return;
+async function importFilesTo(folderPath) {
+  folderPath = normalizePath(folderPath);
+  ensureFolder(folderPath);
 
-  const cleanFolder = normalizePath(folder);
-  if (cleanFolder) ensureFolder(cleanFolder);
+  fileInput.value = "";
+  fileInput.click();
 
-  imageInput.value = "";
-  imageInput.click();
-
-  imageInput.onchange = async () => {
-    const files = Array.from(imageInput.files || []);
+  fileInput.onchange = async () => {
+    const files = Array.from(fileInput.files || []);
     if (!files.length) return;
 
-    for (const file of files) {
-      const dataUrl = await fileToDataURL(file);
-      const safeName = file.name.replace(/\s+/g, "_");
-      const fullPath = cleanFolder ? `${cleanFolder}/${safeName}` : safeName;
+    let imported = 0;
 
-      state.files[fullPath] = dataUrl;
+    for (const file of files) {
+      const safeName = file.name.replace(/\s+/g, "_");
+      const path = uniqueFilePath(joinPath(folderPath, safeName));
+      const content = await readFileSmart(file);
+      project.files[path] = content;
+      imported++;
     }
 
-    saveState();
-    renderTree();
-    setStatus(files.length + " image(s) imported");
-    refreshOutput();
+    saveProject();
+    refreshTree();
+    refreshPreview();
+    setStatus(`${imported} file(s) imported into ${folderPath}`);
   };
 }
 
-function fileToDataURL(file) {
+function readFileSmart(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
+
     reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+
+    reader.onerror = () => reject(reader.error);
+
+    const isTextLike =
+      file.type.startsWith("text/") ||
+      file.type === "application/json" ||
+      /\.(txt|md|html|htm|css|js|json|xml|svg|csv|ts|tsx|jsx|scss|sass|less)$/i.test(file.name);
+
+    if (file.type.startsWith("image/")) {
+      reader.readAsDataURL(file);
+    } else if (isTextLike) {
+      reader.readAsText(file);
+    } else {
+      reader.readAsDataURL(file);
+    }
   });
 }
 
-function setMode(type) {
-  const typeMap = {
-    html: activePreviewFiles.html,
-    css: activePreviewFiles.css,
-    js: activePreviewFiles.js
-  };
+menuBtn.addEventListener("click", toggleSidebar);
+backdrop.addEventListener("click", closeSidebar);
+newProjectBtn.addEventListener("click", newProject);
 
-  const path = typeMap[type];
-  if (path && state.files[path] !== undefined) {
-    openFile(path);
-    return;
-  }
-
-  const fallback = Object.keys(state.files).find(f => {
-    const ext = extOf(f);
-    return (type === "html" && ["html","htm"].includes(ext)) ||
-           (type === "css" && ext === "css") ||
-           (type === "js" && ext === "js");
-  });
-
-  if (fallback) openFile(fallback);
-}
-
-newFileBtn.onclick = createNewFile;
-newFolderBtn.onclick = createNewFolder;
-renameBtn.onclick = renameCurrent;
-deleteBtn.onclick = deleteCurrent;
-importImageBtn.onclick = importImages;
-exportBtn.onclick = downloadJSON;
-htmlBtn.onclick = () => setMode("html");
-cssBtn.onclick = () => setMode("css");
-jsBtn.onclick = () => setMode("js");
-
-editor.addEventListener("input", () => {
-  updateCurrentFileContent();
-  setStatus("Saved");
+editor.addEventListener("input", updateCurrentFileContent);
+window.addEventListener("beforeunload", saveProject);
+dialogRoot.addEventListener("click", (e) => {
+  if (e.target === dialogRoot) closeDialog();
 });
 
-window.addEventListener("beforeunload", saveState);
+function renderAll() {
+  projectNameEl.textContent = project.root;
+  currentFileEl.textContent = currentFile || "No file selected";
+  refreshTree();
+  saveProject();
+}
 
-function init() {
-  renderTree();
-
-  if (!state.files[currentFile]) {
-    currentFile = Object.keys(state.files)[0] || "";
+function openCurrentIfPossible() {
+  if (!project.files[currentFile]) {
+    currentFile = project.activePreviewFiles.html || `${project.root}/index.html`;
   }
 
-  if (currentFile) {
+  if (project.files[currentFile]) {
     openFile(currentFile);
   } else {
     editor.value = "";
+    imagePreviewWrap.style.display = "none";
+    editor.style.display = "block";
     currentFileEl.textContent = "No file selected";
-    refreshOutput();
+    refreshPreview();
   }
+}
 
-  saveState();
+function init() {
+  project = normalizeProject(project);
+  currentFile = project.currentFile || `${project.root}/index.html`;
+  expandedFolders = new Set(project.expandedFolders || [project.root]);
+  activePreviewFiles = project.activePreviewFiles || {
+    html: `${project.root}/index.html`,
+    css: `${project.root}/style.css`,
+    js: `${project.root}/app.js`
+  };
+
+  renderAll();
+  openCurrentIfPossible();
+  setSidebarOpen(false);
+  setStatus("Ready");
 }
 
 init();
 </script>
-
 </body>
 </html>
