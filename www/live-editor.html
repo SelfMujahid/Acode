@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Live Editor</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  height:100vh;
+  background:#111;
+  font-family:sans-serif;
+  display:flex;
+  flex-direction:column;
+}
+
+#top{
+  height:30%;
+  background:#1b1b1b;
+  display:flex;
+  flex-direction:column;
+}
+
+#language{
+  height:45px;
+  border:none;
+  outline:none;
+  background:#222;
+  color:white;
+  padding:10px;
+  font-size:16px;
+}
+
+textarea{
+  flex:1;
+  border:none;
+  outline:none;
+  resize:none;
+  background:#111;
+  color:#00ff88;
+  padding:10px;
+  font-size:15px;
+}
+
+iframe{
+  height:70%;
+  border:none;
+  background:white;
+}
+</style>
+</head>
+
+<body>
+
+<div id="top">
+
+<select id="language">
+  <option value="html">HTML</option>
+  <option value="css">CSS</option>
+  <option value="js">JavaScript</option>
+</select>
+
+<textarea id="editor"></textarea>
+
+</div>
+
+<iframe id="output"></iframe>
+
+<script>
+const editor = document.getElementById("editor");
+const output = document.getElementById("output");
+const language = document.getElementById("language");
+
+let htmlCode = `<h1>Hello</h1>`;
+let cssCode = `body{background:black;color:lime}`;
+let jsCode = `console.log("Hello")`;
+
+function refreshOutput(){
+
+output.srcdoc = `
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+${cssCode}
+</style>
+</head>
+
+<body>
+${htmlCode}
+
+<script>
+${jsCode}
+<\/script>
+</body>
+</html>
+`;
+
+}
+
+function loadEditor(){
+
+if(language.value === "html"){
+  editor.value = htmlCode;
+}
+
+if(language.value === "css"){
+  editor.value = cssCode;
+}
+
+if(language.value === "js"){
+  editor.value = jsCode;
+}
+
+}
+
+language.addEventListener("change", loadEditor);
+
+editor.addEventListener("input", ()=>{
+
+if(language.value === "html"){
+  htmlCode = editor.value;
+}
+
+if(language.value === "css"){
+  cssCode = editor.value;
+}
+
+if(language.value === "js"){
+  jsCode = editor.value;
+}
+
+refreshOutput();
+
+});
+
+loadEditor();
+refreshOutput();
+</script>
+
+</body>
+</html>
