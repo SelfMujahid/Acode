@@ -7,6 +7,7 @@
 <title>Live Editor</title>
 
 <style>
+
 *{
   margin:0;
   padding:0;
@@ -17,6 +18,41 @@ body{
   height:100vh;
   background:#111;
   font-family:sans-serif;
+  overflow:hidden;
+}
+
+#main{
+  display:flex;
+  height:100vh;
+}
+
+#sidebar{
+  width:220px;
+  background:#181818;
+  border-right:1px solid #333;
+  overflow:auto;
+  color:white;
+  padding:10px;
+}
+
+#sidebar h3{
+  margin-bottom:10px;
+}
+
+.file{
+  padding:10px;
+  border-radius:6px;
+  margin-bottom:8px;
+  background:#222;
+  cursor:pointer;
+}
+
+.file:hover{
+  background:#333;
+}
+
+#editor-area{
+  flex:1;
   display:flex;
   flex-direction:column;
 }
@@ -50,16 +86,60 @@ textarea{
 }
 
 iframe{
-  height:70%;
+  flex:1;
   border:none;
   background:white;
 }
+
+#buttons{
+  display:flex;
+  gap:5px;
+  padding:5px;
+  background:#222;
+}
+
+button{
+  padding:8px 12px;
+  border:none;
+  background:#444;
+  color:white;
+  border-radius:5px;
+}
+
+button:active{
+  background:#666;
+}
+
 </style>
 </head>
 
 <body>
 
+<div id="main">
+
+<div id="sidebar">
+
+<h3>Project</h3>
+
+<div class="file" onclick="switchFile('html')">
+index.html
+</div>
+
+<div class="file" onclick="switchFile('css')">
+style.css
+</div>
+
+<div class="file" onclick="switchFile('js')">
+script.js
+</div>
+
+</div>
+
+<div id="editor-area">
+
 <div id="top">
+
+<div id="buttons">
 
 <select id="language">
   <option value="html">HTML</option>
@@ -67,20 +147,43 @@ iframe{
   <option value="js">JavaScript</option>
 </select>
 
+<button onclick="downloadProject()">
+Download
+</button>
+
+</div>
+
 <textarea id="editor"></textarea>
 
 </div>
 
 <iframe id="output"></iframe>
 
+</div>
+
+</div>
+
 <script>
+
 const editor = document.getElementById("editor");
 const output = document.getElementById("output");
 const language = document.getElementById("language");
 
-let htmlCode = localStorage.getItem("htmlCode") || `<h1>Hello</h1>`;
-let cssCode = localStorage.getItem("cssCode") || `body{background:black;color:lime}`;
-let jsCode = localStorage.getItem("jsCode") || `console.log("Hello")`;
+let htmlCode =
+localStorage.getItem("htmlCode")
+|| `<h1>Hello</h1>`;
+
+let cssCode =
+localStorage.getItem("cssCode")
+|| `body{
+background:black;
+color:lime;
+font-family:sans-serif;
+}`;
+
+let jsCode =
+localStorage.getItem("jsCode")
+|| `console.log("Hello")`;
 
 function refreshOutput(){
 
@@ -88,17 +191,21 @@ output.srcdoc = `
 <!DOCTYPE html>
 <html>
 <head>
+
 <style>
 ${cssCode}
 </style>
+
 </head>
 
 <body>
+
 ${htmlCode}
 
 <script>
 ${jsCode}
 <\/script>
+
 </body>
 </html>
 `;
@@ -121,6 +228,14 @@ if(language.value === "js"){
 
 }
 
+function switchFile(type){
+
+language.value = type;
+
+loadEditor();
+
+}
+
 language.addEventListener("change", loadEditor);
 
 editor.addEventListener("input", ()=>{
@@ -137,16 +252,60 @@ if(language.value === "js"){
   jsCode = editor.value;
 }
 
-localStorage.setItem("htmlCode", htmlCode);
-localStorage.setItem("cssCode", cssCode);
-localStorage.setItem("jsCode", jsCode);
-  
+localStorage.setItem(
+"htmlCode",
+htmlCode
+);
+
+localStorage.setItem(
+"cssCode",
+cssCode
+);
+
+localStorage.setItem(
+"jsCode",
+jsCode
+);
+
 refreshOutput();
 
 });
 
+function downloadProject(){
+
+const project = `
+------ index.html ------
+
+${htmlCode}
+
+------ style.css ------
+
+${cssCode}
+
+------ script.js ------
+
+${jsCode}
+`;
+
+const blob = new Blob(
+[project],
+{type:"text/plain"}
+);
+
+const a = document.createElement("a");
+
+a.href = URL.createObjectURL(blob);
+
+a.download = "project.txt";
+
+a.click();
+
+}
+
 loadEditor();
+
 refreshOutput();
+
 </script>
 
 </body>
