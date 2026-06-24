@@ -1,3 +1,5 @@
+esmein Jo bhi duplicate hai woh remove kerke code dobara do pori file ka.
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -464,6 +466,47 @@ input[type="file"]{
   color:white;
 }
 
+.node-actions{
+  position:relative;
+}
+
+.menu-btn{
+  background:none;
+  border:none;
+  color:white;
+  cursor:pointer;
+  font-size:18px;
+  padding:4px 8px;
+}
+
+.context-menu{
+  position:absolute;
+  top:100%;
+  right:0;
+  background:#1e1e1e;
+  border:1px solid #333;
+  border-radius:8px;
+  display:none;
+  flex-direction:column;
+  min-width:170px;
+  z-index:1000;
+  overflow:hidden;
+}
+
+.context-menu button{
+  width:100%;
+  background:none;
+  border:none;
+  color:white;
+  text-align:left;
+  padding:10px;
+  cursor:pointer;
+}
+
+.context-menu button:hover{
+  background:#333;
+}
+
 @media (max-width: 900px){
   #project-name{
     max-width:28vw;
@@ -716,7 +759,6 @@ function setActiveProject(id) {
   appState.activeProjectId = id;
   saveAppState();
   openCurrentFile();
-  closeSidebar();
 }
 
 function createProject(name) {
@@ -725,7 +767,6 @@ function createProject(name) {
   appState.activeProjectId = project.id;
   saveAppState();
   openCurrentFile();
-  closeSidebar();
 }
 
 function setSidebarOpen(open) {
@@ -844,8 +885,6 @@ function openFile(path) {
   saveAppState();
   renderSidebarTree();
   refreshPreview();
-
-  if (window.innerWidth < 900) closeSidebar();
 }
 
 function openCurrentFile() {
@@ -935,35 +974,59 @@ function renderFolderNode(project, folderPath, isRoot = false) {
   left.appendChild(name);
 
   const actions = document.createElement("div");
-  actions.className = "node-actions";
+actions.className = "node-actions";
 
-  actions.appendChild(makeNodeButton("📁+", "New folder", async (e) => {
-    e.stopPropagation();
-    await createFolderIn(project, folderPath);
-  }));
+const menuBtn = document.createElement("button");
+menuBtn.className = "menu-btn";
+menuBtn.textContent = "⋮";
 
-  actions.appendChild(makeNodeButton("📄+", "New file", async (e) => {
-    e.stopPropagation();
-    await createFileIn(project, folderPath);
-  }));
+const menu = document.createElement("div");
+menu.className = "context-menu";
 
-  actions.appendChild(makeNodeButton("⤴", "Import", async (e) => {
-    e.stopPropagation();
-    await importFilesTo(project, folderPath);
-  }));
+menu.appendChild(makeNodeButton("📁 New Folder", "New folder", async (e) => {
+  e.stopPropagation();
+  await createFolderIn(project, folderPath);
+}));
 
-  actions.appendChild(makeNodeButton("✎", "Rename", async (e) => {
-    e.stopPropagation();
-    await renameNode(project, folderPath);
-  }));
+menu.appendChild(makeNodeButton("📄 New File", "New file", async (e) => {
+  e.stopPropagation();
+  await createFileIn(project, folderPath);
+}));
 
-  actions.appendChild(makeNodeButton("🗑", "Delete", async (e) => {
-    e.stopPropagation();
-    await deleteNode(project, folderPath);
-  }, "danger"));
+menu.appendChild(makeNodeButton("⤴ Import", "Import", async (e) => {
+  e.stopPropagation();
+  await importFilesTo(project, folderPath);
+}));
 
-  row.appendChild(left);
-  row.appendChild(actions);
+menu.appendChild(makeNodeButton("✎ Rename", "Rename", async (e) => {
+  e.stopPropagation();
+  await renameNode(project, folderPath);
+}));
+
+menu.appendChild(makeNodeButton("🗑 Delete", "Delete", async (e) => {
+  e.stopPropagation();
+  await deleteNode(project, folderPath);
+}, "danger"));
+
+menuBtn.addEventListener("click", (e) => {
+
+  e.stopPropagation();
+
+  document.querySelectorAll(".context-menu").forEach(m => {
+    if (m !== menu) m.style.display = "none";
+  });
+
+  menu.style.display =
+    menu.style.display === "flex"
+    ? "none"
+    : "flex";
+});
+
+actions.appendChild(menuBtn);
+actions.appendChild(menu);
+
+row.appendChild(left);
+row.appendChild(actions);
 
   row.addEventListener("click", (e) => {
     if (e.target.closest(".node-actions")) return;
@@ -1032,17 +1095,40 @@ function renderFileNode(project, filePath) {
   left.appendChild(name);
 
   const actions = document.createElement("div");
-  actions.className = "node-actions";
+actions.className = "node-actions";
 
-  actions.appendChild(makeNodeButton("✎", "Rename", async (e) => {
-    e.stopPropagation();
-    await renameNode(project, filePath);
-  }));
+const menuBtn = document.createElement("button");
+menuBtn.className = "menu-btn";
+menuBtn.textContent = "⋮";
 
-  actions.appendChild(makeNodeButton("🗑", "Delete", async (e) => {
-    e.stopPropagation();
-    await deleteNode(project, filePath);
-  }, "danger"));
+const menu = document.createElement("div");
+menu.className = "context-menu";
+
+menu.appendChild(makeNodeButton("✎ Rename", "Rename", async (e) => {
+  e.stopPropagation();
+  await renameNode(project, filePath);
+}));
+
+menu.appendChild(makeNodeButton("🗑 Delete", "Delete", async (e) => {
+  e.stopPropagation();
+  await deleteNode(project, filePath);
+}, "danger"));
+
+menuBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+
+  document.querySelectorAll(".context-menu").forEach(m => {
+    if (m !== menu) m.style.display = "none";
+  });
+
+  menu.style.display =
+    menu.style.display === "flex"
+    ? "none"
+    : "flex";
+});
+
+actions.appendChild(menuBtn);
+actions.appendChild(menu);
 
   row.appendChild(left);
   row.appendChild(actions);
@@ -1374,6 +1460,7 @@ async function renameNode(project, path) {
   saveAppState();
   renderAll();
   openCurrentFile();
+  refreshPreview();
 }
 
 async function deleteNode(project, path) {
@@ -2203,12 +2290,18 @@ async function renameNode(project, path) {
     if (oldPath === project.root) {
       project.root = finalTarget;
       project.name = finalTarget;
+
+      renderProjectList();
     }
   }
 
   saveAppState();
-  renderAll();
+
+  renderProjectList();
+  renderSidebarTree();
+
   openCurrentFile();
+  refreshPreview();
 }
 
 async function deleteNode(project, path) {
@@ -2343,6 +2436,14 @@ function init() {
 }
 
 init();
+
+document.addEventListener("click", () => {
+
+  document.querySelectorAll(".context-menu").forEach(menu => {
+    menu.style.display = "none";
+  });
+
+});
 </script>
 </body>
 </html>
